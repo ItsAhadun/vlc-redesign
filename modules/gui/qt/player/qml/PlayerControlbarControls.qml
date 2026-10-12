@@ -69,8 +69,79 @@ QtObject {
         { id: ControlListModel.PLAYER_SWITCH_BUTTON, file: "PlayerSwitchButton.qml", label: VLCIcons.fullscreen, text: qsTr("Switch Player") },
         { id: ControlListModel.ARTWORK_INFO, file: "ArtworkInfoWidget.qml", label: VLCIcons.info, text: qsTr("Artwork Info") },
         { id: ControlListModel.PLAYBACK_SPEED_BUTTON, file: "PlaybackSpeedButton.qml", label: "1x", text: qsTr("Playback Speed") },
-        { id: ControlListModel.HIGH_RESOLUTION_TIME_WIDGET, file: "HighResolutionTimeWidget.qml", label: VLCIcons.time, text: qsTr("High Resolution Time") }
+        { id: ControlListModel.HIGH_RESOLUTION_TIME_WIDGET, file: "HighResolutionTimeWidget.qml", label: VLCIcons.time, text: qsTr("High Resolution Time") },
+        // redesign controls (design/SPEC.md "Customize Player")
+        { id: ControlListModel.AUDIO_SETTINGS_BUTTON, file: "AudioSettingsButton.qml", label: VLCIcons.visualization, text: qsTr("Audio") },
+        { id: ControlListModel.SUBTITLE_BUTTON, file: "SubtitleButton.qml", label: VLCIcons.audiosub, text: qsTr("Subtitles") },
+        { id: ControlListModel.PLAYBACK_SETTINGS_BUTTON, file: "PlaybackSettingsButton.qml", label: VLCIcons.settings, text: qsTr("Playback Settings") },
+        { id: ControlListModel.SKIP_FW_10_BUTTON, file: "SkipForward10Button.qml", label: VLCIcons.skip_for, text: qsTr("Forward 10s") },
+        { id: ControlListModel.SKIP_BACK_10_BUTTON, file: "SkipBack10Button.qml", label: VLCIcons.skip_back, text: qsTr("Backward 10s") },
+        { id: ControlListModel.SKIP_FW_15_BUTTON, file: "SkipForward15Button.qml", label: VLCIcons.skip_for, text: qsTr("Forward 15s") },
+        { id: ControlListModel.SKIP_BACK_15_BUTTON, file: "SkipBack15Button.qml", label: VLCIcons.skip_back, text: qsTr("Backward 15s") },
+        { id: ControlListModel.PIP_BUTTON, file: "PipButton.qml", label: VLCIcons.window_restore, text: qsTr("Picture in Picture") },
+        { id: ControlListModel.HDR_BUTTON, file: "HdrButton.qml", label: VLCIcons.tv, text: qsTr("HDR") },
+        { id: ControlListModel.ZOOM_BUTTON, file: "ZoomButton.qml", label: VLCIcons.search, text: qsTr("Zoom") },
+        { id: ControlListModel.SIDEBAR_BUTTON, file: "SidebarButton.qml", label: VLCIcons.panel_left, text: qsTr("Right Sidebar") },
+        { id: ControlListModel.SETTINGS_BUTTON, file: "SettingsButton.qml", label: VLCIcons.settings, text: qsTr("VLC Settings") },
+        { id: ControlListModel.HOME_BUTTON, file: "HomeButton.qml", label: VLCIcons.home, text: qsTr("Go Home") },
+        { id: ControlListModel.REPLAY_BUTTON, file: "ReplayButton.qml", label: VLCIcons.history, text: qsTr("Replay") },
+        { id: ControlListModel.CHAPTERS_BUTTON, file: "ChaptersButton.qml", label: VLCIcons.list, text: qsTr("Chapters") },
+        { id: ControlListModel.FAVORITE_BUTTON, file: "FavoriteButton.qml", label: VLCIcons.active_indicator, text: qsTr("Favorite") },
+        { id: ControlListModel.ADD_BOOKMARK_BUTTON, file: "AddBookmarkButton.qml", label: VLCIcons.bookmark, text: qsTr("Bookmark") },
+        { id: ControlListModel.PLAYLISTS_BUTTON, file: "PlaylistsButton.qml", label: VLCIcons.playlist, text: qsTr("Playlists") },
+        { id: ControlListModel.WIDGET_DIVIDER, file: "DividerWidget.qml", label: "|", text: qsTr("Divider") },
+        { id: ControlListModel.THUMBNAIL_WIDGET, file: "ThumbnailWidget.qml", label: VLCIcons.album_cover, text: qsTr("Thumbnail") },
+        { id: ControlListModel.FILE_NAME_WIDGET, file: "FileNameWidget.qml", label: VLCIcons.info, text: qsTr("File Name") },
+        { id: ControlListModel.ARTIST_NAME_WIDGET, file: "ArtistNameWidget.qml", label: VLCIcons.info, text: qsTr("Artist Name") },
+        { id: ControlListModel.FOLDER_NAME_WIDGET, file: "FolderNameWidget.qml", label: VLCIcons.info, text: qsTr("Folder Name") },
+        { id: ControlListModel.PLAYLIST_NAME_WIDGET, file: "PlaylistNameWidget.qml", label: VLCIcons.info, text: qsTr("Playlist Name") }
     ]
+
+    // items of the "Customize Player" palette, in the design order
+    // (design/SPEC.md 2.1 "Player - customize"), mapped to control ids
+    readonly property var customizePalette: [
+        ControlListModel.WIDGET_SPACER_EXTEND,      // Spacer
+        ControlListModel.WIDGET_DIVIDER,            // Divider
+        ControlListModel.PLAYBACK_SPEED_BUTTON,     // Playback Speed
+        ControlListModel.SKIP_FW_10_BUTTON,         // Forward 10s
+        ControlListModel.SKIP_BACK_10_BUTTON,       // Backward 10s
+        ControlListModel.SKIP_FW_15_BUTTON,         // Forward 15s
+        ControlListModel.SKIP_BACK_15_BUTTON,       // Backward 15s
+        ControlListModel.STOP_BUTTON,               // Stop
+        ControlListModel.LOOP_BUTTON,               // Repeat
+        ControlListModel.RANDOM_BUTTON,             // Shuffle
+        ControlListModel.RECORD_BUTTON,             // Record
+        ControlListModel.SNAPSHOT_BUTTON,           // Snapshot
+        ControlListModel.PIP_BUTTON,                // Picture in Picture
+        ControlListModel.HDR_BUTTON,                // HDR
+        ControlListModel.ZOOM_BUTTON,               // Zoom
+        ControlListModel.SIDEBAR_BUTTON,            // Right Sidebar
+        ControlListModel.QUIT_BUTTON,               // Quit VLC
+        ControlListModel.SETTINGS_BUTTON,           // VLC Settings
+        ControlListModel.HOME_BUTTON,               // Go Home
+        ControlListModel.THUMBNAIL_WIDGET,          // Thumbnail
+        ControlListModel.FILE_NAME_WIDGET,          // File Name
+        ControlListModel.ARTIST_NAME_WIDGET,        // Artist Name
+        ControlListModel.FOLDER_NAME_WIDGET,        // Folder Name
+        ControlListModel.PLAYLIST_NAME_WIDGET,      // Playlist Name
+        ControlListModel.INFO_BUTTON,               // Properties
+        ControlListModel.REPLAY_BUTTON,             // Replay
+        ControlListModel.CHAPTERS_BUTTON,           // Chapters
+        ControlListModel.FAVORITE_BUTTON,           // Favorite
+        ControlListModel.ADD_BOOKMARK_BUTTON,       // Bookmark
+        ControlListModel.BOOKMARK_BUTTON,           // Bookmarks
+        ControlListModel.PLAYLISTS_BUTTON           // Playlists
+    ]
+
+    // label of a control in the "Customize Player" palette
+    readonly property var customizeLabels: ({
+        [ControlListModel.WIDGET_SPACER_EXTEND]: qsTr("Spacer"),
+        [ControlListModel.LOOP_BUTTON]: qsTr("Repeat"),
+        [ControlListModel.RANDOM_BUTTON]: qsTr("Shuffle"),
+        [ControlListModel.QUIT_BUTTON]: qsTr("Quit VLC"),
+        [ControlListModel.INFO_BUTTON]: qsTr("Properties"),
+        [ControlListModel.BOOKMARK_BUTTON]: qsTr("Bookmarks")
+    })
 
     function control(id) {
         const entry = controlList.find( function(e) { return ( e.id === id ) } )

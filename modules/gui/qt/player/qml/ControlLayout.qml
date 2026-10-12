@@ -56,7 +56,7 @@ FocusScope {
                     size += item.Layout.minimumWidth
             }
 
-            return size + ((count - 1 + ((controlLayout.alignment & (Qt.AlignLeft | Qt.AlignRight)) ? 1 : 0)) * playerControlLayout.spacing)
+            return size + ((count - 1 + ((controlLayout.alignment & (Qt.AlignLeft | Qt.AlignRight)) ? 1 : 0)) * controlLayout.spacing)
         }
     }
 
@@ -72,7 +72,7 @@ FocusScope {
                 maximumWidth += item.implicitWidth
             }
 
-            maximumWidth += ((count - 1 + ((alignment & (Qt.AlignLeft | Qt.AlignRight)) ? 1 : 0)) * playerControlLayout.spacing)
+            maximumWidth += ((count - 1 + ((alignment & (Qt.AlignLeft | Qt.AlignRight)) ? 1 : 0)) * controlLayout.spacing)
 
             return maximumWidth
         }
@@ -96,6 +96,8 @@ FocusScope {
     property alias model: repeater.model
 
     property alias spacing: rowLayout.spacing
+
+    property alias iconWrapper: repeater.iconWrapper
 
     // Signals
 
