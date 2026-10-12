@@ -42,8 +42,16 @@ Widgets.ExpandGridItemView {
 
     // Settings
 
-    basePictureWidth: VLCStyle.gridCover_video_width
-    basePictureHeight: VLCStyle.gridCover_video_height
+    // redesign video cards: 316x178, 20 px gaps, title only (row pitch about 257)
+    basePictureWidth: VLCStyle.videoCard_width
+    basePictureHeight: VLCStyle.videoCard_height
+
+    titleTopMargin: VLCStyle.dp(19, VLCStyle.scale)
+    subtitleHeight: 0
+
+    defaultHorizontalSpacing: VLCStyle.card_spacing
+    gridHorizontalSpacing: VLCStyle.card_spacing
+    verticalSpacing: VLCStyle.dp(42, VLCStyle.scale)
 
     activeFocusOnTab: true
 
@@ -101,12 +109,7 @@ Widgets.ExpandGridItemView {
                   &&
                   gridView.expandIndex !== gridItem.index) ? 0.7 : 1
 
-        // FIXME: Sometimes MLBaseModel::getDataAt returns {} so we use 'isNew === true'.
-        showNewIndicator: (model.isNew === true)
-
         dragItem: gridView.dragItem
-
-        labels: gridView.labels(model)
 
         // Events
 

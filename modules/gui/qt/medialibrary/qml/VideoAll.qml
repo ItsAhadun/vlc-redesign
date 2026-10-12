@@ -26,6 +26,8 @@ import VLC.Widgets as Widgets
 import VLC.MainInterface
 import VLC.Util
 import VLC.Style
+import VLC.Player
+import VLC.Playlist
 
 MainViewLoader {
     id: root
@@ -186,10 +188,11 @@ MainViewLoader {
         }
     }
 
+    // Compact list (design/SPEC.md 2.1, 970:3308): thumbnail + name rows in columns
     Component {
         id: list
 
-        VideoListDisplay {
+        Widgets.CompactMediaList {
             id: listView
 
             // Settings
@@ -198,20 +201,7 @@ MainViewLoader {
 
             selectionModel: root.selectionModel
 
-            rowContextMenu: root.contextMenu
-
-            dragItem: root.dragItem
-
-            preferredHeader: root.header
-
-            headerPositioning: root.headerPositioning
-
-            activeFocusOnTab: true
-
-            section.property: root.sectionProperty
-
-            fadingEdge.enableBeginningFade: root.enableBeginningFade
-            fadingEdge.enableEndFade: root.enableEndFade
+            currentMrl: Player.isStarted ? (MainPlaylistController.currentItem?.url?.toString() ?? "") : ""
 
             displayMarginBeginning: root.displayMarginBeginning
             displayMarginEnd: root.displayMarginEnd
@@ -226,23 +216,11 @@ MainViewLoader {
 
             // Events
 
-            onActionForSelection: (selection) => {
-                root.onAction(selectionModel.selectedIndexes)
+            onItemActivated: (index) => root.onAction([root.model.index(index, 0)])
+
+            onContextMenuRequested: (index, globalPos) => {
+                root.contextMenu.popup(selectionModel.selectedIndexes, globalPos)
             }
-
-            onItemDoubleClicked: (index, model) => root.onDoubleClick(model)
-
-            onRightClick: (_,_,globalMousePos) => {
-                root.contextMenu.popup(selectionModel.selectedIndexes, globalMousePos)
-            }
-
-            coverLabels: root.listLabels
-
-            showGroupCountColumn: root.showGroupCountColumn
-
-            coverWidth: root.listCoverWidth
-            coverHeight: root.listCoverHeight
-            coverRadius: root.listCoverRadius
         }
     }
 

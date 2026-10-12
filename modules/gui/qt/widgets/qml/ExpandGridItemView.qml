@@ -47,6 +47,9 @@ Widgets.ExpandGridView {
 
     property alias maxNbItemPerRow: gridHelper.maxNbItemPerRow
 
+    property alias defaultHorizontalSpacing: gridHelper.defaultHorizontalSpacing
+    property alias gridHorizontalSpacing: gridHelper.horizontalSpacing
+
     // Settings
 
     nbItemPerRow: gridHelper.nbItemPerRow

@@ -24,12 +24,27 @@ import VLC.Widgets as Widgets
 import VLC.Util
 import VLC.Style
 
+// Video card (design/SPEC.md 2.1): 16:9 rounded thumbnail, title below in
+// FG/A2 (FG/A3 once watched) and the Accent/Main watched progress along the
+// thumbnail bottom.
 Widgets.GridItem {
     id: root
+
+    // the ColorContext palette is null until it is inherited from a parent context
+    readonly property var _palette: theme.palette ?? VLCStyle.palette
 
     property bool showNewIndicator: false
     
     property var labels
+
+    // the media was played (until its end when there is no progress)
+    readonly property bool watched: (model.isNew === false)
+    readonly property real watchedProgress: {
+        const progress = model.progress ?? 0
+        if (progress > 0)
+            return Helpers.clamp(progress, 0, 1)
+        return root.watched ? 1.0 : 0.0
+    }
 
     function play() {
         if ( model.id !== undefined ) {
@@ -40,83 +55,44 @@ Widgets.GridItem {
 
     image: model.thumbnail || ""
     fallbackImage: VLCStyle.noArtVideoCover
-    fillMode: Image.Stretch
+    fillMode: Image.PreserveAspectCrop
 
     title: model.title || qsTr("Unknown title")
-    subtitle: model?.duration?.formatHMS() ?? ""
-    pictureWidth: VLCStyle.gridCover_video_width
-    pictureHeight: VLCStyle.gridCover_video_height
+    // the redesign cards only show the title
+    subtitle: ""
+    pictureWidth: VLCStyle.videoCard_width
+    pictureHeight: VLCStyle.videoCard_height
+    pictureRadius: VLCStyle.radius_large
 
-    // Bottom rounding is provided by the progress bar if it is visible:
-    mediaCover.radiusBottomLeft: progressBar.visible ? 0.0 : mediaCover.radius
-    mediaCover.radiusBottomRight: progressBar.visible ? 0.0 : mediaCover.radius
+    titleTopMargin: VLCStyle.dp(19, VLCStyle.scale)
+    titleWeight: VLCStyle.fontWeight_regular
+    titleColor: root.selected ? theme.fg.highlight
+                              : (root.watched ? root._palette.fgA3 : root._palette.fgA2)
 
-    selectedShadow.height: selectedShadow.implicitHeight + (progressBar.visible ? progressBar.height : 0.0)
-    unselectedShadow.height: unselectedShadow.implicitHeight + (progressBar.visible ? progressBar.height : 0.0)
+    showShadows: false
 
     Widgets.VideoProgressBar {
         id: progressBar
 
         parent: root.mediaCover
-
-        // If the background color of the image is opaque (which should be
-        // the case by default), we can place the progress bar beneath the
-        // thumbnail and disable clipping because the top part would not be
-        // exposed. Note that the top part is still going to be painted, as
-        // long as the image is not opaque which is the expected case since
-        // SDF-based round images always have transparent parts which needs
-        // blending. If the image is not rounded and its blending is disabled,
-        // the top part of the bar is not going to be painted, thanks to depth
-        // testing. Furthermore, fragment shader may not even be executed for
-        // the top part that are obscured by the opaque image, provided that
-        // early depth test is applicable. In any case, since bottom radii
-        // are 0.0 and background color is opaque, the top part (if painted)
-        // will not be exposed to the user.
-        z: (root.mediaCover.color.a > (1.0 - Number.EPSILON)) ? -0.1 : 0.0
-        clip: (z >= 0.0)
+        z: 10
 
         anchors {
-            top: parent.bottom
+            bottom: parent.bottom
             left: parent.left
             right: parent.right
         }
 
-        visible: (model.progress > 0)
+        visible: root.watchedProgress > 0
 
         radius: root.pictureRadius
-        value: Helpers.clamp(model.progress !== undefined ? model.progress : 0, 0, 1)
-    }
-
-    pictureOverlay: Item {
-        implicitWidth: root.pictureWidth
-        implicitHeight: root.pictureHeight
-
-        Widgets.ScaledImage {
-            id: image
-
-            anchors.right: parent.right
-            anchors.top: parent.top
-
-            width: VLCStyle.gridItem_newIndicator
-            height: width
-
-            visible: root.showNewIndicator
-
-            source: VLCStyle.newIndicator
-        }
-
-        Widgets.VideoQualityLabels {
-            anchors {
-                top: parent.top
-                right: parent.right
-                topMargin: VLCStyle.margin_xxsmall
-                leftMargin: VLCStyle.margin_xxsmall
-                rightMargin: VLCStyle.margin_xxsmall
-            }
-
-            labels: root.labels
-        }
+        value: root.watchedProgress
     }
 
     onPlayClicked: root.play()
+
+    ColorContext {
+        id: theme
+        colorSet: ColorContext.Item
+    }
 }

@@ -390,7 +390,7 @@ FocusScope {
                     }
                 }
 
-                Widgets.PageExt.DefaultPageHeader {
+                Widgets.LibraryHeaderBar {
                     id: viewHeader
 
                     anchors {
@@ -398,7 +398,8 @@ FocusScope {
                         right: parent.right
                     }
 
-                    text: qsTr("Albums")
+                    showNavigationButtons: false
+                    breadcrumbModel: [{ text: qsTr("Albums"), path: [], siblings: [] }]
 
                     sortMenu: sortMenuAlbums
 
@@ -407,7 +408,6 @@ FocusScope {
 
                     leftPadding: root._contentLeftMargin
                     rightPadding: root._contentRightMargin
-                    topPadding: VLCStyle.layoutTitle_top_padding
 
                     Navigation.parentItem: root
                     Navigation.upItem: artistBanner

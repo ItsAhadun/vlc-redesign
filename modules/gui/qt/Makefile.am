@@ -1123,6 +1123,8 @@ libqml_module_medialibrary_a_QML = \
 	medialibrary/qml/MLGlobalShortcuts.qml \
 	medialibrary/qml/Bookmarks.qml \
 	medialibrary/qml/MLContextMenu.qml \
+	medialibrary/qml/PlaylistsDisplay.qml \
+	medialibrary/qml/RecentDisplay.qml \
 	medialibrary/qml/RecentMediaMenu.qml \
 	medialibrary/qml/MLDragItem.qml \
 	medialibrary/qml/MLTableColumns.qml \
@@ -1314,10 +1316,13 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/ActionButtonPrimary.qml \
 	widgets/qml/BannerTabButton.qml \
 	widgets/qml/BannerCone.qml \
+	widgets/qml/CompactMediaList.qml \
 	widgets/qml/FolderIcon.qml \
+	widgets/qml/LibraryHeaderBar.qml \
 	widgets/qml/MenuExt.qml \
 	widgets/qml/MenuItemExt.qml \
 	widgets/qml/MenuSeparatorExt.qml \
+	widgets/qml/SearchField.qml \
 	widgets/qml/BusyIndicatorExt.qml \
 	widgets/qml/CaptionLabel.qml \
 	widgets/qml/CheckButton.qml \
