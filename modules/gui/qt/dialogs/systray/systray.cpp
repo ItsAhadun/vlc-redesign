@@ -128,7 +128,10 @@ void VLCSystray::updateTooltipName( const QString& name )
             ( m_notificationSetting == NOTIFICATION_MINIMIZED && (windowVisiblity == QWindow::Hidden || windowVisiblity == QWindow::Minimized)))
         {
             const auto showMessageTemplate = [this, &name](const auto &icon) {
-                showMessage( qtr( "VLC media player" ), name, icon, 3000 );
+                /* qt-notification-duration: seconds, 0 = system default */
+                const int duration = var_InheritInteger( m_intf, "qt-notification-duration" );
+                showMessage( qtr( "VLC media player" ), name, icon,
+                             duration > 0 ? duration * 1000 : 10000 );
             };
 
             assert(m_intf);

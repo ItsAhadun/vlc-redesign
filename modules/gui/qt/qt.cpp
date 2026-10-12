@@ -295,6 +295,38 @@ static void ShowDialog   ( intf_thread_t *, int, int, intf_dialog_args_t * );
 #define PIP_MODE_TEXT N_( "Enable picture-in-picture (PiP) mode" )
 #define PIP_MODE_LONGTEXT N_( "Picture-in-picture mode allows playing video contained in a smaller area so that the interface remains usable." )
 
+/* Options added for the redesigned settings window */
+#define DEVELOPER_MODE_TEXT N_( "Developer mode" )
+#define DEVELOPER_MODE_LONGTEXT N_( "Shows the developer options in the settings window." )
+#define REMEMBER_GEOMETRY_TEXT N_( "Remember window size and position" )
+#define REMEMBER_GEOMETRY_LONGTEXT N_( "Restores the size and position of the main window when VLC starts." )
+#define NOTIFICATION_DURATION_TEXT N_( "Popup duration" )
+#define NOTIFICATION_DURATION_LONGTEXT N_( "How long the track change popup stays on screen, in seconds. " \
+    "0 uses the system default." )
+#define HISTORY_FILTER_TEXT N_( "Never remember items matching" )
+#define HISTORY_FILTER_LONGTEXT N_( "Media whose name or location matches this regular expression " \
+    "are not added to the history." )
+#define VIDEO_CLICK_TEXT N_( "Single click on the video" )
+#define VIDEO_CLICK_LONGTEXT N_( "Action performed when you click once on the video." )
+#define VIDEO_DBLCLICK_TEXT N_( "Double click on the video" )
+#define VIDEO_DBLCLICK_LONGTEXT N_( "Action performed when you double-click on the video." )
+#define WHEEL_REVERSE_TEXT N_( "Reverse scroll direction" )
+#define WHEEL_REVERSE_LONGTEXT N_( "Inverts the direction of the mouse wheel actions on the video." )
+#define SEEK_THUMBNAIL_TEXT N_( "Show thumbnail while scrubbing" )
+#define SEEK_THUMBNAIL_LONGTEXT N_( "Shows a preview image of the video above the seek bar while you drag or hover it." )
+#define OSD_DURATION_TEXT N_( "Show feedback for" )
+#define OSD_DURATION_LONGTEXT N_( "How long the on-screen feedback for shortcuts stays visible, in seconds." )
+#define AUTOHIDE_CONTROLS_TEXT N_( "Auto-hide the controls" )
+#define AUTOHIDE_CONTROLS_LONGTEXT N_( "When the playback controls hide while a video plays." )
+
+static const int video_click_values[] = { 0, 1, 2 };
+static const char *const video_click_texts[] = {
+    N_("Do nothing"), N_("Play / Pause"), N_("Toggle fullscreen") };
+
+static const int autohide_controls_values[] = { 0, 1, 2 };
+static const char *const autohide_controls_texts[] = {
+    N_("Never"), N_("In fullscreen only"), N_("Always") };
+
 #define ACCENT_COLOR_TEXT N_( "Accent color" )
 #define ACCENT_COLOR_LONGTEXT N_( "Adjusts the accent color, special values are 'default' and 'system' (requires Qt 6.6) ." )
 
@@ -479,6 +511,26 @@ vlc_module_begin ()
     add_float_with_range( "qt-safe-area", 0, 0, 100.0, SAFE_AREA_TEXT, SAFE_AREA_LONGTEXT )
 
     add_string( "qt-accent-color", "default", ACCENT_COLOR_TEXT, ACCENT_COLOR_LONGTEXT )
+
+    /* Options of the redesigned settings window (dialogs/settings). Not yet
+     * read by the interface: qt-video-click-action, qt-video-dblclick-action,
+     * qt-wheel-reverse, qt-seek-thumbnail, qt-osd-duration,
+     * qt-autohide-controls, qt-history-filter (QML can read them through the
+     * SettingsBackend singleton of VLC.Dialogs). */
+    add_bool( "qt-developer-mode", false, DEVELOPER_MODE_TEXT, DEVELOPER_MODE_LONGTEXT )
+    add_bool( "qt-remember-geometry", true, REMEMBER_GEOMETRY_TEXT, REMEMBER_GEOMETRY_LONGTEXT )
+    add_integer_with_range( "qt-notification-duration", 3, 0, 10,
+                            NOTIFICATION_DURATION_TEXT, NOTIFICATION_DURATION_LONGTEXT )
+    add_string( "qt-history-filter", "", HISTORY_FILTER_TEXT, HISTORY_FILTER_LONGTEXT )
+    add_integer( "qt-video-click-action", 1, VIDEO_CLICK_TEXT, VIDEO_CLICK_LONGTEXT )
+        change_integer_list( video_click_values, video_click_texts )
+    add_integer( "qt-video-dblclick-action", 2, VIDEO_DBLCLICK_TEXT, VIDEO_DBLCLICK_LONGTEXT )
+        change_integer_list( video_click_values, video_click_texts )
+    add_bool( "qt-wheel-reverse", false, WHEEL_REVERSE_TEXT, WHEEL_REVERSE_LONGTEXT )
+    add_bool( "qt-seek-thumbnail", true, SEEK_THUMBNAIL_TEXT, SEEK_THUMBNAIL_LONGTEXT )
+    add_float_with_range( "qt-osd-duration", 1.0, 0.5, 5.0, OSD_DURATION_TEXT, OSD_DURATION_LONGTEXT )
+    add_integer( "qt-autohide-controls", 1, AUTOHIDE_CONTROLS_TEXT, AUTOHIDE_CONTROLS_LONGTEXT )
+        change_integer_list( autohide_controls_values, autohide_controls_texts )
 
     cannot_unload_broken_library()
 
