@@ -83,8 +83,13 @@ PlayerPopup {
                 anchors.verticalCenter: parent.verticalCenter
                 text: VLCIcons.remove
                 description: qsTr("Decrease the subtitle delay")
-                colorContext.palette: VLCStyle.palette
                 onClicked: Player.subtitleDelayMS -= 50
+
+                Binding {
+                    target: minusButton.colorContext
+                    property: "palette"
+                    value: VLCStyle.palette
+                }
             }
 
             T.Label {
@@ -95,13 +100,19 @@ PlayerPopup {
             }
 
             Widgets.IconToolButton {
+                id: plusButton
                 anchors.right: parent.right
                 anchors.rightMargin: VLCStyle.space_10
                 anchors.verticalCenter: parent.verticalCenter
                 text: VLCIcons.add
                 description: qsTr("Increase the subtitle delay")
-                colorContext.palette: VLCStyle.palette
                 onClicked: Player.subtitleDelayMS += 50
+
+                Binding {
+                    target: plusButton.colorContext
+                    property: "palette"
+                    value: VLCStyle.palette
+                }
             }
         }
     }
