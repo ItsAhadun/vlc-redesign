@@ -32,10 +32,19 @@
 #                        click X Y        left click at screen coordinates
 #                        dclick X Y       double click
 #                        move X Y         move the pointer (hover states)
-#                        key KEYS         xdotool key, e.g. "key ctrl+l"
-#                        type TEXT        type text
+#                        wheel X Y DIR [N] mouse wheel at X Y, DIR = up|down|
+#                                         left|right, N notches (default 1)
+#                        key KEYS         xdotool key, e.g. "key ctrl+l" (to
+#                                         the main window, focused first)
+#                        type TEXT        type text (to the main window)
+#                        fkey KEYS        key / type to the currently focused
+#                        ftype TEXT       window (e.g. the settings window)
 #                        sleep S          wait S seconds
 #                        shot FILE.png    take an extra screenshot now
+#   --keep-windows     keep the other top-level windows (settings window,
+#                      dialogs) on screen, above the main window; by default
+#                      only the main window is captured. The video window of
+#                      the dummy compositor is hidden in both cases.
 #   --log FILE         where to write the VLC log (default: <out>.log)
 #   --no-qml-warnings  don't print QML warnings found in the log
 #
@@ -45,6 +54,7 @@
 #   screenshot.sh /tmp/player.png /opt/vlc-media/test-720p.mp4
 #   screenshot.sh --do "click 60 92" --do "sleep 2" /tmp/video.png  # Video tab
 #   screenshot.sh --size 1280x720 /tmp/small.png -- --qt-minimal-view
+#   screenshot.sh --keep-windows --do "key ctrl+p" --do "sleep 2" /tmp/settings.png
 #
 # The script prints the QML warnings/errors (qrc:/... lines) from the VLC log;
 # they are the runtime counterpart of qml-check.sh. Exit code is non-zero if
@@ -64,6 +74,7 @@ compositor=dummy
 actions=()
 logfile=""
 show_qml=1
+keep_windows=0
 pos=()
 extra=()
 while [ $# -gt 0 ]; do
@@ -80,6 +91,7 @@ while [ $# -gt 0 ]; do
         --do) actions+=("$2"); shift ;;
         --log) logfile="$2"; shift ;;
         --no-qml-warnings) show_qml=0 ;;
+        --keep-windows) keep_windows=1 ;;
         -h|--help) sed -n '2,/^set -e/{/^#/p}' "$0"; exit 0 ;;
         --) shift; extra=("$@"); break ;;
         *) pos+=("$1") ;;
@@ -210,8 +222,14 @@ for a in "${actions[@]+"${actions[@]}"}"; do
         click)  read -r x y <<<"$rest"; xdotool mousemove "$x" "$y" click 1 ;;
         dclick) read -r x y <<<"$rest"; xdotool mousemove "$x" "$y" click --repeat 2 1 ;;
         move)   read -r x y <<<"$rest"; xdotool mousemove "$x" "$y" ;;
+        wheel)  read -r x y dir n <<<"$rest"
+                case "$dir" in up) b=4 ;; down) b=5 ;; left) b=6 ;; right) b=7 ;;
+                    *) echo "warning: bad wheel direction '$dir'" >&2; continue ;; esac
+                xdotool mousemove "$x" "$y" click --repeat "${n:-1}" --delay 50 "$b" ;;
         key)    xdotool windowfocus "$win" 2>/dev/null || true; xdotool key $rest ;;
         type)   xdotool windowfocus "$win" 2>/dev/null || true; xdotool type -- "$rest" ;;
+        fkey)   xdotool key $rest ;;
+        ftype)  xdotool type -- "$rest" ;;
         sleep)  sleep "$rest" ;;
         shot)   import -window root "$(realpath -m "$rest")"; echo "extra screenshot: $rest" ;;
         *) echo "warning: unknown action '$a'" >&2 ;;
@@ -223,14 +241,26 @@ done
 kill -0 "$vlc_pid" 2>/dev/null || { echo "error: VLC exited early; log tail:" >&2; tail -30 "$logfile" >&2; exit 1; }
 # Keep only the main window on screen: with the dummy compositor the video is
 # in a separate top-level window whose stacking order is random.
-if [ "$compositor" = dummy ]; then
+# --keep-windows: hide only the video window, keep the other windows (settings
+# window, dialogs) above the main window.
+others=()
+if [ "$compositor" = dummy ] || [ $keep_windows = 1 ]; then
     for id in $(xwininfo -root -children 2>/dev/null | awk '/^ +0x[0-9a-f]+ /{print $1}'); do
         [ "$((id))" = "$((win))" ] && continue
         xwininfo -id "$id" 2>/dev/null | grep -q IsViewable || continue
+        if [ $keep_windows = 1 ]; then
+            props="$(xprop -id "$id" WM_CLASS WM_WINDOW_ROLE 2>/dev/null)" || continue
+            if ! grep -q 'vlc-video\|WM_CLASS(STRING) = "vlc", "Vlc"' <<<"$props"; then
+                others+=("$id")
+                continue
+            fi
+            [ "$compositor" = dummy ] || continue
+        fi
         xdotool windowunmap "$id" 2>/dev/null || true
     done
 fi
 xdotool windowraise "$win" 2>/dev/null || true
+for id in "${others[@]+"${others[@]}"}"; do xdotool windowraise "$id" 2>/dev/null || true; done
 sleep 0.5
 import -window root "$out"
 echo "screenshot: $out (${W}x${H}, theme=$theme${media:+, media=$media})"

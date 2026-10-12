@@ -138,8 +138,14 @@ design/tools/screenshot.sh out.png -- --qt-minimal-view    # extra VLC options a
   visible); `--playing` to let it play, `--at SECONDS` to seek. Audio goes to
   the `adummy` output.
 * `--do ACTION` (repeatable) drives the UI before the capture:
-  `click X Y`, `dclick X Y`, `move X Y` (hover), `key ctrl+l`, `type text`,
-  `sleep S`, `shot extra.png` (intermediate screenshot).
+  `click X Y`, `dclick X Y`, `move X Y` (hover), `wheel X Y up|down|left|right [N]`,
+  `key ctrl+l`, `type text` (both to the main window), `fkey KEYS` /
+  `ftype text` (to the focused window, e.g. the settings window), `sleep S`,
+  `shot extra.png` (intermediate screenshot).
+* **Secondary windows** (settings window, dialogs) are hidden before the
+  capture by default; `--keep-windows` keeps them on screen above the main
+  window (only the video window of the dummy compositor is hidden), e.g. the
+  settings window: `screenshot.sh --keep-windows --do "key ctrl+p" --do "sleep 2" settings.png`.
 * The VLC log is written next to the PNG (`out.log`, or `--log FILE`) and the
   QML runtime warnings/errors (`qrc:/qt/qml/VLC/...qml:LINE: ...`) are printed
   - treat new ones as failures.
