@@ -226,14 +226,26 @@ FocusScope {
                         color: theme.palette.fgA2
                     }
 
+                    readonly property bool _drawnControl: cell.modelData === ControlListModel.SKIP_FW_15_BUTTON
+                                                          || cell.modelData === ControlListModel.SKIP_BACK_15_BUTTON
+
                     Widgets.IconLabel {
                         anchors.centerIn: parent
-                        visible: cell.modelData !== ControlListModel.THUMBNAIL_WIDGET
+                        visible: !iconBox._drawnControl
+                                 && cell.modelData !== ControlListModel.THUMBNAIL_WIDGET
                                  && cell.modelData !== ControlListModel.WIDGET_DIVIDER
                                  && cell.modelData !== ControlListModel.WIDGET_SPACER_EXTEND
                         text: cell._entry.label ?? ""
                         color: cellHover.hovered ? theme.palette.fg1 : theme.palette.fgA2
                         font.pixelSize: VLCStyle.icon_normal
+                    }
+
+                    // controls without a glyph of their own (drawn icon)
+                    Loader {
+                        anchors.centerIn: parent
+                        active: iconBox._drawnControl
+                        source: active ? cell._entry.source : ""
+                        onLoaded: item.paintOnly = true
                     }
                 }
 
@@ -243,7 +255,7 @@ FocusScope {
                     anchors.horizontalCenter: parent.horizontalCenter
 
                     // narrow like the design: "Forward" / "10s" on two lines
-                    width: Math.min(implicitWidth, VLCStyle.dp(80, VLCStyle.scale))
+                    width: Math.min(implicitWidth, VLCStyle.dp(76, VLCStyle.scale))
 
                     text: cell._label
                     wrapMode: Text.WordWrap
@@ -316,12 +328,12 @@ FocusScope {
             width: VLCStyle.dialogButton_width
             height: VLCStyle.dialogButton_height
 
+            opacity: enabled ? 1.0 : 0.5
+
             background: Rectangle {
                 radius: VLCStyle.radius_small
                 color: {
-                    if (!button.enabled)
-                        return Qt.alpha(theme.palette.bgA4, 0.5)
-                    if (button.primary)
+                    if (button.primary && button.enabled)
                         return button.hovered ? theme.palette.accentBright : theme.palette.accentMain
                     return button.hovered ? theme.palette.bgA2 : theme.palette.bgA4
                 }
@@ -333,8 +345,7 @@ FocusScope {
                 text: button.text
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                color: !button.enabled ? theme.palette.fgA4
-                                       : (button.primary ? theme.palette.fgOnAccent : theme.palette.fgA2)
+                color: (button.primary && button.enabled) ? theme.palette.fgOnAccent : theme.palette.fgA2
                 font.pixelSize: VLCStyle.fontSize_body
             }
         }

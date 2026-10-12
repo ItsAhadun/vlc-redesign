@@ -56,10 +56,14 @@ T.Pane {
         id: volumeWidget
 
         anchors.fill: parent
-        spacing: 0
+        spacing: VLCStyle.space_6
 
         Widgets.IconToolButton{
             id: volumeBtn
+
+            // "Icon Wrapper" hit area (30x32)
+            horizontalPadding: (VLCStyle.iconWrapper_width - VLCStyle.icon_normal) / 2
+            verticalPadding: (VLCStyle.iconWrapper_height - VLCStyle.icon_normal) / 2
 
             focus: true
             paintOnly: root.paintOnly

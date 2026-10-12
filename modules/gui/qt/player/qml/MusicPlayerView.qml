@@ -28,7 +28,8 @@ import VLC.Util
 // art enlarged, blurred and darkened as a full-bleed background, the art
 // centered (738x737 in a 1920x986 area, radius 12) and "title - artist"
 // (24 px, FG/2) under it. The current lyric line, when the media has lyrics,
-// is shown under the caption.
+// is shown under the caption; with the lyrics view on (MainCtx.lyricsMode,
+// "Show lyrics" in the audio popup) the synced lyrics fill the left part.
 FocusScope {
     id: root
 
@@ -43,10 +44,13 @@ FocusScope {
     // design proportions: 738 / 986 of the height, 74 gap, 29 caption
     readonly property real _artSize: Math.max(0, Math.min(height * 0.748,
                                                           height - _gap - caption.height - VLCStyle.space_24 * 2,
-                                                          width - VLCStyle.space_24 * 2))
+                                                          (lyricsLayout ? width * 0.45 : width) - VLCStyle.space_24 * 2))
     readonly property real _gap: Math.min(VLCStyle.dp(74, VLCStyle.scale), height * 0.075)
 
     signal wheelEvent(var wheel)
+
+    readonly property bool lyricsLayout: MainCtx.lyricsMode && Player.hasLyrics
+                                         && width > VLCStyle.colWidth(6)
 
     // background: blurred, darkened artwork
     Item {
@@ -125,8 +129,37 @@ FocusScope {
         }
     }
 
+    Loader {
+        id: lyricsLoader
+
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.margins: VLCStyle.space_24
+
+        width: parent.width * 0.55
+
+        active: root.lyricsLayout
+
+        sourceComponent: LyricsFlickable {
+            onPlayerPositionChangeRequested: (time) => {
+                Player.setTime(time)
+                lyricsSyncToPlayback = true
+            }
+        }
+    }
+
+    Item {
+        id: artArea
+
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        anchors.left: root.lyricsLayout ? lyricsLoader.right : parent.left
+    }
+
     Column {
-        anchors.centerIn: parent
+        anchors.centerIn: artArea
 
         spacing: root._gap
 
@@ -172,7 +205,7 @@ FocusScope {
                 id: caption
 
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.min(implicitWidth, root.width - VLCStyle.space_24 * 2)
+                width: Math.min(implicitWidth, artArea.width - VLCStyle.space_24 * 2)
 
                 text: {
                     const title = Player.title || Player.name
@@ -191,7 +224,7 @@ FocusScope {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Math.min(implicitWidth, root.width - VLCStyle.space_24 * 2)
 
-                visible: Player.hasLyrics && text !== ""
+                visible: Player.hasLyrics && text !== "" && !root.lyricsLayout
                 text: Player.currentLyric.text
 
                 elide: Text.ElideRight

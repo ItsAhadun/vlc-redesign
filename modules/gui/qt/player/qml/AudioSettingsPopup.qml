@@ -80,6 +80,15 @@ PlayerPopup {
             }
         }
 
+        PopupOption {
+            width: list.width
+            visible: Player.hasLyrics
+            iconText: VLCIcons.topbar_music
+            text: qsTr("Show Lyrics")
+            checked: MainCtx.lyricsMode
+            onClicked: MainCtx.lyricsMode = !MainCtx.lyricsMode
+        }
+
         PopupSection {
             width: list.width
             text: qsTr("Effects")
