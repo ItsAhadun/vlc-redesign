@@ -594,6 +594,23 @@ Item {
         onAboutToHide: restoreFocus()
     }
 
+    // Settings window (dialogs/settings/qml), see DialogsProvider::prefsDialog()
+    Loader {
+        id: settingsWindowLoader
+
+        // last page shown, kept while VLC runs
+        property string pageId: "general"
+
+        active: DialogsProvider.settingsWindowVisible
+        source: "qrc:///qt/qml/VLC/Dialogs/SettingsWindow.qml"
+        onLoaded: item.pageId = pageId
+
+        Connections {
+            target: settingsWindowLoader.item
+            function onPageIdChanged() { settingsWindowLoader.pageId = settingsWindowLoader.item.pageId }
+        }
+    }
+
     Loader {
         id: toolbarEditorDialogLoader
         active: false

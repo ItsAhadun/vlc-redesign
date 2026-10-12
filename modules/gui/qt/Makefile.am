@@ -151,6 +151,7 @@ libqt_plugin_la_SOURCES = \
 	dialogs/preferences/preferences_widgets.hpp \
 	dialogs/preferences/simple_preferences.cpp \
 	dialogs/preferences/simple_preferences.hpp \
+	dialogs/settings/settingsbackend.cpp dialogs/settings/settingsbackend.hpp \
 	dialogs/sout/convert.cpp dialogs/sout/convert.hpp \
 	dialogs/sout/profile_selector.cpp \
 	dialogs/sout/profile_selector.hpp \
@@ -435,6 +436,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	dialogs/preferences/preferences.moc.cpp \
 	dialogs/preferences/preferences_widgets.moc.cpp \
 	dialogs/preferences/simple_preferences.moc.cpp \
+	dialogs/settings/settingsbackend.moc.cpp \
 	dialogs/sout/convert.moc.cpp \
 	dialogs/sout/profile_selector.moc.cpp \
 	dialogs/sout/sout.moc.cpp \
@@ -974,6 +976,19 @@ libqt_plugin_la_RES = \
 	pixmaps/prefs/spref_medialibrary.png \
 	pixmaps/prefs/spref_subtitles.png \
 	pixmaps/prefs/spref_video.png \
+	pixmaps/settings/audio.svg \
+	pixmaps/settings/controls.svg \
+	pixmaps/settings/extensions.svg \
+	pixmaps/settings/general.svg \
+	pixmaps/settings/interface.svg \
+	pixmaps/settings/library.svg \
+	pixmaps/settings/network.svg \
+	pixmaps/settings/performance.svg \
+	pixmaps/settings/playback.svg \
+	pixmaps/settings/privacy.svg \
+	pixmaps/settings/recording.svg \
+	pixmaps/settings/subtitles.svg \
+	pixmaps/settings/video.svg \
 	pixmaps/sd/assembleenationale.svg \
 	pixmaps/sd/capture-card.svg \
 	pixmaps/sd/directory.svg \
@@ -1043,6 +1058,22 @@ libqml_module_dialogs_a_QML = \
 	dialogs/dialogs/qml/Dialogs.qml \
 	dialogs/dialogs/qml/ModalDialog.qml \
 	dialogs/dialogs/qml/WindowDialog.qml \
+	dialogs/settings/qml/SettingsAccentSwatches.qml \
+	dialogs/settings/qml/SettingsAdvancedBar.qml \
+	dialogs/settings/qml/SettingsButton.qml \
+	dialogs/settings/qml/SettingsCategoryButton.qml \
+	dialogs/settings/qml/SettingsDropdown.qml \
+	dialogs/settings/qml/SettingsPageView.qml \
+	dialogs/settings/qml/SettingsPages.qml \
+	dialogs/settings/qml/SettingsRow.qml \
+	dialogs/settings/qml/SettingsSearchField.qml \
+	dialogs/settings/qml/SettingsSection.qml \
+	dialogs/settings/qml/SettingsSegmented.qml \
+	dialogs/settings/qml/SettingsSlider.qml \
+	dialogs/settings/qml/SettingsStartupVolume.qml \
+	dialogs/settings/qml/SettingsTextField.qml \
+	dialogs/settings/qml/SettingsToggle.qml \
+	dialogs/settings/qml/SettingsWindow.qml \
 	dialogs/toolbar/qml/EditorDNDDelegate.qml \
 	dialogs/toolbar/qml/EditorDNDView.qml\
 	dialogs/toolbar/qml/EditorDummyButton.qml \

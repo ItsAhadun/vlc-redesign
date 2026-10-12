@@ -190,6 +190,16 @@ PrefsDialog::~PrefsDialog()
     module_list_free( p_list );
 }
 
+void PrefsDialog::showSimplePanel( int panel )
+{
+    if( panel < 0 || panel >= SPrefsMax )
+        return;
+    simple->setChecked( true );
+    setSimple();
+    if( simple_tree )
+        simple_tree->switchPanel( panel );
+}
+
 void PrefsDialog::setExpert()
 {
     /* Lazy creation */
