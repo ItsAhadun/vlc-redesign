@@ -99,12 +99,48 @@ SettingsBackend::SettingsBackend(qt_intf_t *intf, QObject *parent)
             bump(QString());
         });
     }
+
+    /* core options driven by interface options, set on the instance so that
+     * the inputs and video outputs inherit them */
+    vlc_object_t *libvlc = VLC_OBJECT(vlc_object_instance(m_intf));
+    var_Create(libvlc, "osd-duration", VLC_VAR_FLOAT);
+    var_Create(libvlc, "mouse-pause-policy", VLC_VAR_STRING | VLC_VAR_DOINHERIT);
+    applyCoreOptions(QString());
 }
 
 SettingsBackend::~SettingsBackend()
 {
     if (m_saveTimer.isActive())
         save();
+    vlc_object_t *libvlc = VLC_OBJECT(vlc_object_instance(m_intf));
+    var_Destroy(libvlc, "osd-duration");
+    var_Destroy(libvlc, "mouse-pause-policy");
+}
+
+void SettingsBackend::applyCoreOptions(const QString &key)
+{
+    /* read from the configuration like value(), so that the player view
+     * (QML) and the core agree */
+    vlc_object_t *libvlc = VLC_OBJECT(vlc_object_instance(m_intf));
+
+    /* "Show feedback for": duration of the core OSD messages */
+    if (key.isEmpty() || key == QLatin1String("qt-osd-duration"))
+        var_SetFloat(libvlc, "osd-duration", config_GetFloat("qt-osd-duration"));
+
+    /* "Single click on the video": play/pause is done by the core (the input
+     * reads "mouse-pause-policy" when it starts, so a change applies from the
+     * next media), the other actions by the player view (Player.qml) */
+    if (key.isEmpty() || key == QLatin1String("qt-video-click-action"))
+    {
+        if (config_GetInt("qt-video-click-action") == 1)
+        {
+            char *policy = config_GetPsz("mouse-pause-policy");
+            var_SetString(libvlc, "mouse-pause-policy", policy ? policy : "auto");
+            free(policy);
+        }
+        else
+            var_SetString(libvlc, "mouse-pause-policy", "disabled");
+    }
 }
 
 bool SettingsBackend::languageEditable() const
@@ -486,6 +522,8 @@ void SettingsBackend::save()
 
 void SettingsBackend::bump(const QString &key)
 {
+    applyCoreOptions(key);
+
     ++m_revision;
     emit revisionChanged();
     emit valueChanged(key);

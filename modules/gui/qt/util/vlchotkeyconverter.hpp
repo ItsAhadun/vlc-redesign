@@ -29,8 +29,21 @@ class WheelToVLCConverter : public QObject
     Q_OBJECT
     QML_ELEMENT
 
+    /// invert the wheel direction (option "qt-wheel-reverse")
+    Q_PROPERTY(bool reversed READ reversed WRITE setReversed NOTIFY reversedChanged FINAL)
+
 public:
     using QObject::QObject;
+
+    bool reversed() const { return m_reversed; }
+    void setReversed(bool reversed)
+    {
+        if (m_reversed == reversed)
+            return;
+        m_reversed = reversed;
+        m_scrollAmount = {};
+        emit reversedChanged();
+    }
 
 public:
     Q_INVOKABLE Qt::Orientations getWheelOrientation(int x, int y);
@@ -50,6 +63,8 @@ signals:
      * @param modifiers are keyboard pressed modifiers
      */
     void wheelLeftRight(int steps, Qt::KeyboardModifiers modifiers);
+
+    void reversedChanged();
 
 public slots:
     /**
@@ -74,6 +89,7 @@ private:
     QPoint m_scrollAmount = {};
     Qt::KeyboardModifiers m_modifiers = {};
     Qt::MouseButtons m_buttons = {};
+    bool m_reversed = false;
 };
 
 #endif // VLC_HOTKEY_CONVERTER_HPP

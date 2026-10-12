@@ -512,11 +512,13 @@ vlc_module_begin ()
 
     add_string( "qt-accent-color", "default", ACCENT_COLOR_TEXT, ACCENT_COLOR_LONGTEXT )
 
-    /* Options of the redesigned settings window (dialogs/settings). Not yet
-     * read by the interface: qt-video-click-action, qt-video-dblclick-action,
-     * qt-wheel-reverse, qt-seek-thumbnail, qt-osd-duration,
-     * qt-autohide-controls, qt-history-filter (QML can read them through the
-     * SettingsBackend singleton of VLC.Dialogs). */
+    /* Options of the redesigned settings window (dialogs/settings), read
+     * through the SettingsBackend singleton of VLC.Dialogs:
+     * qt-video-click-action, qt-video-dblclick-action, qt-wheel-reverse,
+     * qt-autohide-controls (player/qml/Player.qml), qt-seek-thumbnail
+     * (player/qml/SliderBar.qml), qt-osd-duration and the play/pause click
+     * (mapped to the core "osd-duration" and "mouse-pause-policy" by
+     * SettingsBackend), qt-history-filter (medialibrary/medialib.cpp). */
     add_bool( "qt-developer-mode", false, DEVELOPER_MODE_TEXT, DEVELOPER_MODE_LONGTEXT )
     add_bool( "qt-remember-geometry", true, REMEMBER_GEOMETRY_TEXT, REMEMBER_GEOMETRY_LONGTEXT )
     add_integer_with_range( "qt-notification-duration", 3, 0, 10,

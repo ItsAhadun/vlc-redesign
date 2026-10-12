@@ -843,6 +843,11 @@ static const char* const ppsz_restore_playback_desc[] = {
     "VLC can display messages on the video. This is called OSD (On Screen " \
     "Display).")
 
+#define OSD_DURATION_TEXT N_("On Screen Display duration")
+#define OSD_DURATION_LONGTEXT N_( \
+    "How long the on screen messages (volume, seek, ...) stay visible, in " \
+    "seconds.")
+
 #define TEXTRENDERER_TEXT N_("Text rendering module")
 #define TEXTRENDERER_LONGTEXT N_( \
     "VLC normally uses Freetype for rendering, but this allows you to use svg for instance.")
@@ -1806,6 +1811,8 @@ vlc_module_begin ()
     add_bool( "spu-fill", true, SPU_FULL_TEXT, SPU_FULL_LONGTEXT )
         change_safe ()
     add_bool( "osd", true, OSD_TEXT, OSD_LONGTEXT )
+    add_float_with_range( "osd-duration", 1.0, 0.1, 60.0,
+                          OSD_DURATION_TEXT, OSD_DURATION_LONGTEXT )
     add_module("text-renderer", "text renderer", "any",
                TEXTRENDERER_TEXT, TEXTRENDERER_LONGTEXT)
 

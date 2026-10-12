@@ -80,9 +80,20 @@ FocusScope {
 
     // Private
 
-    property bool _controlsUnderVideo: (MainCtx.pinVideoControls
-                                        &&
-                                        (MainCtx.intfMainWindow.visibility !== Window.FullScreen))
+    readonly property bool _fullscreen: MainCtx.intfMainWindow.visibility === Window.FullScreen
+
+    // options of the settings window, re-read when they change
+    // "qt-autohide-controls": 0 never, 1 in fullscreen only, 2 always
+    readonly property int _autoHideMode: { SettingsBackend.revision; return Number(SettingsBackend.value("qt-autohide-controls") ?? 2) }
+    // "qt-video-click-action" / "qt-video-dblclick-action": 0 nothing, 1 play/pause, 2 fullscreen
+    readonly property int _videoClickAction: { SettingsBackend.revision; return Number(SettingsBackend.value("qt-video-click-action") ?? 1) }
+    readonly property int _videoDblClickAction: { SettingsBackend.revision; return Number(SettingsBackend.value("qt-video-dblclick-action") ?? 2) }
+    readonly property bool _wheelReversed: { SettingsBackend.revision; return !!SettingsBackend.value("qt-wheel-reverse") }
+
+    // the controls never auto-hide
+    property bool _controlsUnderVideo: (MainCtx.pinVideoControls && !_fullscreen)
+                                       || _autoHideMode === 0
+                                       || (_autoHideMode === 1 && !_fullscreen)
 
     property bool _keyPressed: false
 
@@ -380,6 +391,13 @@ FocusScope {
 
                     cursorShape: playerSpecializationLoader.cursorShape
 
+                    wheelReversed: rootPlayer._wheelReversed
+
+                    // a left double click on the video output toggles the
+                    // fullscreen mode (core behavior), other actions are
+                    // handled by the TapHandler below
+                    forwardDoubleClick: rootPlayer._videoDblClickAction === 2
+
                     function onMouseEvent() {
                         //short interval for mouse events
                         if (Player.isInteractive)
@@ -404,6 +422,49 @@ FocusScope {
 
                     TouchDragHandler {
 
+                    }
+
+                    // "Single click" / "Double click on the video" options.
+                    // The video output does play/pause on click (core option
+                    // "mouse-pause-policy", set by SettingsBackend) and
+                    // fullscreen on double click (forwardDoubleClick), the
+                    // other actions are done here. The press/release events
+                    // still reach the video output (passive grab).
+                    TapHandler {
+                        acceptedButtons: Qt.LeftButton
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+
+                        // the clicks are for the menus of interactive media (DVD)
+                        enabled: !Player.isInteractive && !MainCtx.playerCustomizeMode
+                                 && (rootPlayer._videoClickAction === 2
+                                     || (rootPlayer._videoDblClickAction === 1 && rootPlayer._videoClickAction !== 1))
+
+                        onTapped: (eventPoint, button) => {
+                            if (tapCount === 1) {
+                                if (rootPlayer._videoClickAction !== 2)
+                                    return
+                                // wait for a possible double click
+                                if (rootPlayer._videoDblClickAction !== 0)
+                                    singleClickTimer.restart()
+                                else
+                                    Player.toggleFullscreen()
+                            } else if (tapCount === 2) {
+                                singleClickTimer.stop()
+                                // with play/pause on click, the two clicks
+                                // already toggled the playback
+                                if (rootPlayer._videoDblClickAction === 1
+                                    && rootPlayer._videoClickAction !== 1)
+                                    MainPlaylistController.togglePlayPause()
+                            }
+                        }
+                    }
+
+                    Timer {
+                        id: singleClickTimer
+
+                        interval: Qt.styleHints.mouseDoubleClickInterval
+
+                        onTriggered: Player.toggleFullscreen()
                     }
                 }
 
@@ -431,6 +492,8 @@ FocusScope {
 
                 WheelToVLCConverter {
                     id: wheelToVlc
+
+                    reversed: rootPlayer._wheelReversed
 
                     onVlcWheelKey: (key) => MainCtx.sendVLCHotkey(key)
                 }
@@ -779,7 +842,7 @@ FocusScope {
         id: toggleControlBarButton
         visible: Player.isInteractive
                  && MainCtx.hasEmbededVideo
-                 && !(MainCtx.pinVideoControls && !Player.fullscreen)
+                 && !rootPlayer._controlsUnderVideo
                  && (interactiveAutoHideTimer.running === true
                      || rootPlayer.chromeVisible || toggleControlBarButton.hovered)
         focus: true

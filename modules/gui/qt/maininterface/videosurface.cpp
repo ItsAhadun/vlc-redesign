@@ -20,6 +20,7 @@
 #include <QSGRectangleNode>
 #include <QThreadPool>
 #include <vlc_window.h>
+#include <vlc_mouse.h>
 
 #include <QQuickRenderControl>
 #ifdef QT_DECLARATIVE_PRIVATE
@@ -202,7 +203,9 @@ void VideoSurface::mouseDoubleClickEvent(QMouseEvent* event)
     int vlc_button = qtMouseButton2VLC( event->button() );
     if( vlc_button >= 0 )
     {
-        emit mouseDblClicked(vlc_button);
+        // the video output toggles the fullscreen mode on left double clicks
+        if (m_forwardDoubleClick || vlc_button != MOUSE_BUTTON_LEFT)
+            emit mouseDblClicked(vlc_button);
         event->accept();
     }
     else
@@ -222,6 +225,14 @@ void VideoSurface::wheelEvent(QWheelEvent *event)
     event->accept();
 }
 #endif
+
+void VideoSurface::setWheelReversed(bool reversed)
+{
+    if (reversed == m_wheelEventConverter.reversed())
+        return;
+    m_wheelEventConverter.setReversed(reversed);
+    emit wheelReversedChanged();
+}
 
 Qt::CursorShape VideoSurface::getCursorShape() const
 {

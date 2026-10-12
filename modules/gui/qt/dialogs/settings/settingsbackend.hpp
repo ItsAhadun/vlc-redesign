@@ -109,6 +109,8 @@ signals:
 
 private:
     void bump(const QString &key);
+    /// map the interface options that drive core behavior (empty key: all)
+    void applyCoreOptions(const QString &key);
     void scheduleSave();
 
     qt_intf_t *m_intf = nullptr;

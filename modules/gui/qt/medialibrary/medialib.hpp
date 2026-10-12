@@ -176,6 +176,9 @@ signals:
 private:
     static void onMediaLibraryEvent( void* data, const vlc_ml_event_t* event );
 
+    /// removes the history entries matching "qt-history-filter"
+    void applyHistoryFilter();
+
 private:
     qt_intf_t* m_intf;
     vlc::playlist::PlaylistController* m_playlistController = nullptr;

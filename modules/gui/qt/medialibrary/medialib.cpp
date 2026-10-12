@@ -23,6 +23,9 @@
 
 #include <utility>
 
+#include <QRegularExpression>
+#include <QUrl>
+
 #include <QQmlEngine>
 
 MediaLib::MediaLib(qt_intf_t *_intf, vlc::playlist::PlaylistController* playlistController, QObject *_parent)
@@ -396,6 +399,13 @@ void MediaLib::onMediaLibraryEvent( void* data, const vlc_ml_event_t* event )
             });
             break;
         }
+        case VLC_ML_EVENT_HISTORY_CHANGED:
+        {
+            QMetaObject::invokeMethod(self, [self]() {
+                self->applyHistoryFilter();
+            });
+            break;
+        }
         case VLC_ML_EVENT_BACKGROUND_IDLE_CHANGED:
         {
             bool idle = event->background_idle_changed.b_idle;
@@ -408,6 +418,62 @@ void MediaLib::onMediaLibraryEvent( void* data, const vlc_ml_event_t* event )
         default:
             break;
     }
+}
+
+void MediaLib::applyHistoryFilter()
+{
+    // "Never remember items matching" (settings window, Privacy): the media
+    // library adds every played media to the history, so the matching entries
+    // are removed as soon as they get there. Read on each change.
+    char* psz_filter = var_InheritString( m_intf, "qt-history-filter" );
+    const QString filter = qfu( psz_filter );
+    free( psz_filter );
+    if ( filter.isEmpty() )
+        return;
+
+    const QRegularExpression re( filter, QRegularExpression::CaseInsensitiveOption );
+    if ( !re.isValid() )
+    {
+        msg_Warn( m_intf, "invalid history filter: %s", qtu( re.errorString() ) );
+        return;
+    }
+
+    runOnMLThread(this,
+    //ML thread
+    [re](vlc_medialibrary_t* ml) {
+        // new entries are at the top of the history
+        vlc_ml_query_params_t params = vlc_ml_query_params_create();
+        params.i_nbResults = 100;
+
+        ml_unique_ptr<vlc_ml_media_list_t> list{ vlc_ml_list_history( ml, &params, VLC_ML_HISTORY_TYPE_GLOBAL ) };
+        if ( !list )
+            return;
+
+        for ( const vlc_ml_media_t& media : ml_range_iterate<vlc_ml_media_t>( list ) )
+        {
+            bool match = ( media.psz_title && re.match( qfu( media.psz_title ) ).hasMatch() )
+                      || ( media.psz_filename && re.match( qfu( media.psz_filename ) ).hasMatch() );
+
+            if ( !match && media.p_files )
+            {
+                for ( const vlc_ml_file_t& file : ml_range_iterate<vlc_ml_file_t>( media.p_files ) )
+                {
+                    if ( file.b_external || !file.psz_mrl )
+                        continue;
+                    const QUrl url = QUrl::fromEncoded( file.psz_mrl );
+                    const QString location = url.isLocalFile() ? url.toLocalFile() : url.toDisplayString();
+                    if ( re.match( location ).hasMatch() || re.match( qfu( file.psz_mrl ) ).hasMatch() )
+                    {
+                        match = true;
+                        break;
+                    }
+                }
+            }
+
+            if ( match )
+                vlc_ml_media_set_played( ml, media.i_id, false );
+        }
+    }, "historyFilter");
 }
 
 quint64 MediaLib::runOnMLThread(const QObject* obj,

@@ -90,12 +90,21 @@ class VideoSurface : public ViewBlockingRectangle
     Q_OBJECT
     Q_PROPERTY(VideoSurfaceProvider* videoSurfaceProvider READ videoSurfaceProvider WRITE setVideoSurfaceProvider NOTIFY videoSurfaceProviderChanged FINAL)
     Q_PROPERTY(Qt::CursorShape cursorShape READ getCursorShape WRITE setCursorShape RESET unsetCursor FINAL)
+    // invert the wheel direction (option "qt-wheel-reverse")
+    Q_PROPERTY(bool wheelReversed READ wheelReversed WRITE setWheelReversed NOTIFY wheelReversedChanged FINAL)
+    // forward left double clicks to the video output, which toggles the
+    // fullscreen mode (option "qt-video-dblclick-action"); when false the
+    // QML side handles them
+    Q_PROPERTY(bool forwardDoubleClick MEMBER m_forwardDoubleClick NOTIFY forwardDoubleClickChanged FINAL)
 
 public:
     VideoSurface( QQuickItem* parent = nullptr );
 
     VideoSurfaceProvider* videoSurfaceProvider() const { return m_provider; };
     void setVideoSurfaceProvider(VideoSurfaceProvider *newVideoSurfaceProvider);
+
+    bool wheelReversed() const { return m_wheelEventConverter.reversed(); }
+    void setWheelReversed(bool reversed);
 
 protected:
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
@@ -128,12 +137,16 @@ signals:
     void keyPressed(int key, Qt::KeyboardModifiers modifier);
 
     void videoSurfaceProviderChanged();
+    void wheelReversedChanged();
+    void forwardDoubleClickChanged();
 
 protected slots:
     void synchronize();
 
 private:
     QPointF m_oldHoverPos;
+
+    bool m_forwardDoubleClick = true;
 
     WheelToVLCConverter m_wheelEventConverter;
 

@@ -24,6 +24,7 @@ import VLC.Widgets as Widgets
 import VLC.Style
 import VLC.Util
 import VLC.MainInterface
+import VLC.Dialogs
 
 T.ProgressBar {
     id: control
@@ -325,7 +326,11 @@ T.ProgressBar {
     // whether to show the redesign hover card (time + thumbnail) instead of the tooltip
     property bool previewEnabled: true
     // the card shows a frame of the video when possible
-    property bool thumbnailEnabled: Player.hasVideoOutput
+    // "Show thumbnail while scrubbing" (qt-seek-thumbnail)
+    property bool thumbnailEnabled: {
+        SettingsBackend.revision
+        return Player.hasVideoOutput && !!SettingsBackend.value("qt-seek-thumbnail")
+    }
 
     background: Item {
         width: control.availableWidth
