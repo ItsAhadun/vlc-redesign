@@ -185,15 +185,20 @@ void VideoSurface::mouseMoveEvent(QMouseEvent* event)
 
 void VideoSurface::hoverMoveEvent(QHoverEvent* event)
 {
+    // Compare the scene position: the item moves and resizes when the player
+    // controls show or hide, Qt Quick then sends hover events with a new local
+    // position while the pointer did not move, which would show the controls
+    // again (and so on).
     QPointF current_pos = event->position();
-    if (current_pos != m_oldHoverPos)
+    QPointF scene_pos = event->scenePosition();
+    if (scene_pos != m_oldHoverPos)
     {
         QQuickWindow* window = this->window();
         if (!window)
             return;
         qreal dpr = window->effectiveDevicePixelRatio();
         emit mouseMoved(current_pos.x() * dpr, current_pos.y()  * dpr);
-        m_oldHoverPos = current_pos;
+        m_oldHoverPos = scene_pos;
     }
     event->accept();
 }
