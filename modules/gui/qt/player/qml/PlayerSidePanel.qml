@@ -49,13 +49,13 @@ FocusScope {
     // entries do not have a panel page. Restyled library views can replace
     // the page of a section by setting `url` (+ `properties`).
     property var sections: [
-        { name: "home", icon: VLCIcons.home, title: qsTr("Home"), kind: "recentVideos", libraryPath: ["mc", "home"] },
-        { name: "video", icon: VLCIcons.topbar_video, title: qsTr("Videos"), kind: "videos", libraryPath: ["mc", "video"] },
-        { name: "music", icon: VLCIcons.topbar_music, title: qsTr("Music"), kind: "albums", libraryPath: ["mc", "music", "albums"] },
-        { name: "network", icon: VLCIcons.topbar_network, title: qsTr("Network"), libraryPath: ["mc", "network"],
-          action: () => root.openInLibrary(["mc", "network"]) },
-        { name: "playlists", icon: VLCIcons.playlist, title: qsTr("Playlists"), kind: "playlists", libraryPath: ["mc", "music", "playlists"] },
-        { name: "recent", icon: VLCIcons.history, title: qsTr("Recent"), kind: "recent", libraryPath: ["mc", "home"] },
+        { name: "home", icon: VLCIcons.home, title: qsTr("Home"), kind: "recentVideos", libraryPath: ["home"] },
+        { name: "video", icon: VLCIcons.topbar_video, title: qsTr("Videos"), kind: "videos", libraryPath: ["video"] },
+        { name: "music", icon: VLCIcons.topbar_music, title: qsTr("Music"), kind: "albums", libraryPath: ["music", "albums"] },
+        { name: "network", icon: VLCIcons.topbar_network, title: qsTr("Network"), libraryPath: ["network"],
+          action: () => root.openInLibrary(["network"]) },
+        { name: "playlists", icon: VLCIcons.playlist, title: qsTr("Playlists"), kind: "playlists", libraryPath: ["playlists"] },
+        { name: "recent", icon: VLCIcons.history, title: qsTr("Recent"), kind: "recent", libraryPath: ["recent"] },
         { name: "add", icon: VLCIcons.add, title: qsTr("Add"), action: () => DialogsProvider.simpleOpenDialog() }
     ]
 
@@ -259,7 +259,7 @@ FocusScope {
                     text: VLCIcons.fullscreen
                     description: qsTr("Open in the library")
                     font.pixelSize: VLCStyle.icon_normal
-                    onClicked: root.openInLibrary(root.currentSection.libraryPath ?? ["mc", "home"])
+                    onClicked: root.openInLibrary(root.currentSection.libraryPath ?? ["home"])
                 }
             }
         }

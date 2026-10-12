@@ -33,6 +33,6 @@ Widgets.IconToolButton {
 
     onClicked: {
         MainCtx.playerView = false
-        History.push(["mc", "home"])
+        History.push(["home"])
     }
 }
