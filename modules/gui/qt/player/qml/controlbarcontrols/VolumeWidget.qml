@@ -37,6 +37,10 @@ T.Pane {
     }
 
     readonly property var _player: paintOnly ? ({ muted: false, volume: .5 }) : Player
+    // the audio output reports a negative volume while it is unknown (no
+    // output yet, or an output without volume control, e.g. adummy): the audio
+    // then plays at its nominal level, show 100% instead of an empty gauge
+    readonly property real _volume: (_player.volume >= 0) ? _player.volume : 1
     readonly property int _maxvol: MainCtx.maxVolume
     readonly property real _fullvolpos: 100 / _maxvol
     readonly property real _maxvolpos: _maxvol / 100
@@ -70,11 +74,11 @@ T.Pane {
             text: {
                 if (_player.muted)
                     return VLCIcons.volume_muted
-                else if (_player.volume === 0)
+                else if (root._volume === 0)
                     return VLCIcons.volume_zero
-                else if (_player.volume < .33)
+                else if (root._volume < .33)
                     return VLCIcons.volume_low
-                else if (_player.volume <= .66)
+                else if (root._volume <= .66)
                     return VLCIcons.volume_medium
                 else
                     return VLCIcons.volume_high
@@ -227,7 +231,7 @@ T.Pane {
                 // from bounds of this widget and we want to show the current
                 // volume here, so directly use Player.volume instead of "value"
 
-                return Math.round(Player.volume * 100) + "%"
+                return Math.round(root._volume * 100) + "%"
             }
 
             Accessible.name: qsTr("Volume")
@@ -256,7 +260,7 @@ T.Pane {
 
             function _syncVolumeWithPlayer() {
                 volControl._inhibitPlayerVolumeUpdate = true
-                volControl.value = _player.volume
+                volControl.value = root._volume
                 volControl._inhibitPlayerVolumeUpdate = false
             }
 
