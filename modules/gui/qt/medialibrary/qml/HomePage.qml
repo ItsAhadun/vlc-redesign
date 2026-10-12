@@ -28,8 +28,13 @@ import VLC.Widgets as Widgets
 import VLC.Util
 import VLC.Style
 
+// Home (design/SPEC.md 2.1, 6261:15078): "Continue Watching", "Listen Again"
+// and "Frequently Visited Folders" sections, each title opens the full list.
 Widgets.PageExt {
     id: root
+
+    // the ColorContext palette is null until it is inherited from a parent context
+    readonly property var _palette: theme.palette ?? VLCStyle.palette
 
     property var pagePrefix: [] // behave like a Page
 
@@ -43,6 +48,11 @@ Widgets.PageExt {
     hasGridListMode: true
 
     isSearchable: true
+
+    // no "+" on Home
+    addAction: null
+
+    itemCount: -1
 
     property real listCoverHeight: VLCStyle.listAlbumCover_height
     property real listCoverWidth: VLCStyle.listAlbumCover_width
@@ -63,47 +73,41 @@ Widgets.PageExt {
 
     function setCurrentItemFocus(reason) {
         // `focus` is checked, because that indicates the item that has the focus within the focus scope
-        if (continueWatchingRow.focus)
+        if (listenAgainRow.focus)
+            listenAgainRow.forceActiveFocus(reason)
+        else if (foldersRow.focus)
+            foldersRow.forceActiveFocus(reason)
+        else if (continueWatchingRow.visible)
             continueWatchingRow.setCurrentItemFocus(reason)
-        else if (favoritesRow.focus)
-            favoritesRow.setCurrentItemFocus(reason)
-        else if (newVideoRow.focus)
-            newVideoRow.setCurrentItemFocus(reason)
-        else if (newMusicRow.focus)
-            newMusicRow.setCurrentItemFocus(reason)
+        else if (listenAgainRow.visible)
+            listenAgainRow.forceActiveFocus(reason)
         else
-            coneNButtons.forceActiveFocus(reason)
+            foldersRow.forceActiveFocus(reason)
+    }
+
+    function _ensureVisible(item) {
+        contentYBehavior.enabled = true
+        Helpers.positionFlickableToContainItem(flickable, item)
+        contentYBehavior.enabled = false
     }
 
     contentItem: Flickable {
         id: flickable
 
-        implicitWidth: Math.max(coneNButtons.implicitWidth, mediaRows.implicitWidth)
-        implicitHeight: coneNButtons.implicitHeight + (_hasMedias ? mediaRows.implicitHeight : 0)
+        implicitWidth: mediaRows.implicitWidth
+        implicitHeight: mediaRows.implicitHeight
 
         contentWidth: width
-        contentHeight: _hasMedias ? coneNButtons.implicitHeight + mediaRows.implicitHeight
-                                  : height - topMargin - bottomMargin
+        contentHeight: mediaRows.implicitHeight
 
         flickableDirection: Flickable.AutoFlickIfNeeded
 
         boundsBehavior: Flickable.StopAtBounds
 
-        // FIXME: make the media rows positioners consider the flickable margins when adjusting flickable `contentY`.
         bottomMargin: VLCStyle.margin_large
 
         pixelAligned: (MainCtx.qtVersion() >= MainCtx.qtVersionCheck(6, 2, 5)) // QTBUG-103996
                       && (Screen.pixelDensity >= VLCStyle.highPixelDensityThreshold) // no need for sub-pixel alignment with high pixel density
-
-        property bool _hasMedias: true
-
-        Binding on _hasMedias {
-            when: !continueWatchingRow.model.loading && !favoritesRow.model.loading
-                  && !newVideoRow.model.loading && !newMusicRow.model.loading
-            value: continueWatchingRow.visible || favoritesRow.visible
-                   || newVideoRow.visible || newMusicRow.visible
-            restoreMode: Binding.RestoreNone
-        }
 
         T.ScrollBar.vertical: Widgets.ScrollBarExt {}
 
@@ -153,46 +157,26 @@ Widgets.PageExt {
             // jumps when it is enabled again later on.
         }
 
-        NoMedialibHome.ConeNButtons {
-            id: coneNButtons
-
-            focus: true
-
-            orientation: flickable._hasMedias ? Qt.Horizontal : Qt.Vertical
-
-            anchors.centerIn: flickable._hasMedias ? undefined : parent
-            anchors.top: flickable._hasMedias ? parent.top : undefined
-            anchors.left: flickable._hasMedias ? parent.left : undefined
-            anchors.leftMargin: flickable._hasMedias ? newVideoRow.contentLeftMargin : 0
-
-            Navigation.parentItem: root
-            Navigation.upItem: root.header
-            Navigation.downItem: mediaRows
-
-            onActiveFocusChanged: {
-                contentYBehavior.enabled = true
-                Helpers.positionFlickableToContainItem(flickable, this)
-                contentYBehavior.enabled = false
-            }
-        }
-
         Widgets.NavigableCol {
             id: mediaRows
 
-            anchors.top: coneNButtons.bottom
             anchors.left: parent.left
             anchors.right: parent.right
 
-            spacing: 0 // NOTE: We depend on the top padding of view header currently.
+            spacing: 0
 
             Navigation.parentItem: root
-            Navigation.upItem: coneNButtons
+            Navigation.upItem: root.header
+
+            // Continue Watching
 
             Widgets.ViewHeader {
                 visible: continueWatchingRow.visible
                 text: qsTr("Continue Watching")
                 view: continueWatchingRow
-                seeAllButton.visible: continueWatchingRow.model.maximumCount > continueWatchingRow.model.count
+                topPadding: 0
+                bottomPadding: VLCStyle.space_14
+                seeAllButton.visible: true
 
                 onSeeAllButtonClicked: function (reason) {
                     root.seeAllButtonClicked("continueWatching", reason)
@@ -238,7 +222,7 @@ Widgets.PageExt {
                     searchPattern: root.search.pattern
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(continueWatchingRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+                    limit: MainCtx.gridView ? Math.max(continueWatchingRow.currentItem?.nbItemPerRow ?? null, 1) : 4
                 }
 
                 contextMenu: MLContextMenu {
@@ -248,254 +232,286 @@ Widgets.PageExt {
                 }
 
                 onActiveFocusChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        contentYBehavior.enabled = true
-                        Helpers.positionFlickableToContainItem(flickable, item ?? this)
-                        contentYBehavior.enabled = false
-                    }
-                }
-
-                onCurrentIndexChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        if (item) {
-                            contentYBehavior.enabled = true
-                            Helpers.positionFlickableToContainItem(flickable, item)
-                            contentYBehavior.enabled = false
-                        }
-                    }
+                    if (activeFocus)
+                        root._ensureVisible(this)
                 }
             }
+
+            SectionSpacer { visible: continueWatchingRow.visible }
+
+            // Listen Again: the audio media of the playback history
 
             Widgets.ViewHeader {
-                visible: favoritesRow.visible
-                text: qsTr("Favorites")
-                view: favoritesRow
-                seeAllButton.visible: favoritesRow.model.maximumCount > favoritesRow.model.count
+                visible: listenAgainRow.visible
+                text: qsTr("Listen Again")
+                view: listenAgainRow
+                topPadding: 0
+                bottomPadding: VLCStyle.space_14
+                seeAllButton.visible: true
 
                 onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("favorites", reason)
+                    History.push(["recent"], reason)
                 }
             }
 
-            MediaView {
-                id: favoritesRow
+            CardRow {
+                id: listenAgainRow
 
-                AccessibleCompat.id: "favourites"
+                AccessibleCompat.id: "listenAgain"
 
-                anchors.left: parent.left
-                anchors.right: parent.right
+                visible: contentWidth > 0
 
-                height: currentItem?.contentHeight ?? implicitHeight
-
-                visible: model.count !== 0
-
-                listHeaderPositioning: ListView.InlineHeader
-                enableBeginningFade: false
-                enableEndFade: false
-                listSectionProperty: ""
-
-                interactive: false
-
-                emptyLabel: null
-
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
-
-                listCoverWidth: root.listCoverWidth
-                listCoverHeight: root.listCoverHeight
-                listCoverRadius: root.listCoverRadius
-
-                Navigation.parentItem: mediaRows
-
-                model: MLMediaModel {
-                    favoriteOnly: true
-
+                model: MLRecentMediaModel {
+                    id: recentModel
                     ml: MediaLib
-
-                    sortCriteria: root.sort.criteria || "insertion"
-                    sortOrder: root.sort.order
+                    limit: 30
                     searchPattern: root.search.pattern
+                }
 
-                    // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(favoritesRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+                cardHeight: VLCStyle.musicCard_size + VLCStyle.dp(19 + 17 + 4 + 17, VLCStyle.scale)
+
+                delegate: MusicCard {
+                    onActivated: MediaLib.addAndPlay(model.id)
+                    onContextMenu: (globalPos) => recentContextMenu.popup([recentModel.index(index, 0)], globalPos)
+                }
+
+                MLContextMenu {
+                    id: recentContextMenu
+                    model: recentModel
                 }
 
                 onActiveFocusChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        contentYBehavior.enabled = true
-                        Helpers.positionFlickableToContainItem(flickable, item ?? this)
-                        contentYBehavior.enabled = false
-                    }
+                    if (activeFocus)
+                        root._ensureVisible(this)
                 }
-
-                onCurrentIndexChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        if (item) {
-                            contentYBehavior.enabled = true
-                            Helpers.positionFlickableToContainItem(flickable, item)
-                            contentYBehavior.enabled = true
-                        }
-                    }
-                }
-            }
-
-            Widgets.ViewHeader {
-                text: qsTr("New Videos")
-                visible: newVideoRow.visible
-                view: newVideoRow
-                seeAllButton.visible: newVideoRow.model.maximumCount > newVideoRow.model.count
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("newVideo", reason)
-                }
-            }
-
-            VideoAll {
-                id: newVideoRow
-
-                AccessibleCompat.id: "newVideo"
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-
-                height: currentItem?.contentHeight ?? implicitHeight
-
-                visible: model.count !== 0
-
-                headerPositioning: ListView.InlineHeader
-                enableBeginningFade: false
-                enableEndFade: false
-                sectionProperty: ""
-
-                interactive: false
-
-                emptyLabel: null
-
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
-
-                listCoverWidth: root.listCoverWidth
-                listCoverHeight: root.listCoverHeight
-                listCoverRadius: root.listCoverRadius
 
                 Navigation.parentItem: mediaRows
+            }
 
-                model: MLVideoModel {
+            SectionSpacer { visible: listenAgainRow.visible }
+
+            // Frequently Visited Folders: the media library video folders
+
+            Widgets.ViewHeader {
+                visible: foldersRow.visible
+                text: qsTr("Frequently Visited Folders")
+                view: foldersRow
+                topPadding: 0
+                bottomPadding: VLCStyle.space_14
+                seeAllButton.visible: true
+
+                onSeeAllButtonClicked: function (reason) {
+                    MainCtx.grouping = MainCtx.GROUPING_FOLDER
+                    History.push(["video"], reason)
+                }
+            }
+
+            CardRow {
+                id: foldersRow
+
+                AccessibleCompat.id: "frequentFolders"
+
+                visible: count > 0
+
+                model: MLVideoFoldersModel {
                     ml: MediaLib
-
-                    sortCriteria: root.sort.criteria || "insertion"
-                    sortOrder: root.sort.order
                     searchPattern: root.search.pattern
-
-                    // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(newVideoRow.currentItem?.nbItemPerRow ?? null, 1) : 5
                 }
 
-                contextMenu: MLContextMenu {
-                    model: newVideoRow.model
+                cardHeight: VLCStyle.musicCard_size + VLCStyle.dp(19 + 17, VLCStyle.scale)
 
-                    showPlayAsAudioAction: true
+                delegate: FolderCard {
+                    onActivated: History.push(["video", "all", "group"],
+                                               { parentId: model.id, title: model.title },
+                                               Qt.MouseFocusReason)
                 }
 
                 onActiveFocusChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        contentYBehavior.enabled = true
-                        Helpers.positionFlickableToContainItem(flickable, item ?? this)
-                        contentYBehavior.enabled = false
-                    }
+                    if (activeFocus)
+                        root._ensureVisible(this)
                 }
-
-                onCurrentIndexChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        if (item) {
-                            contentYBehavior.enabled = true
-                            Helpers.positionFlickableToContainItem(flickable, item)
-                            contentYBehavior.enabled = false
-                        }
-                    }
-                }
-            }
-
-            Widgets.ViewHeader {
-                text: qsTr("New Music")
-                visible: newMusicRow.visible
-                view: newMusicRow
-                seeAllButton.visible: newMusicRow.model.maximumCount > newMusicRow.model.count
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("newMusic", reason)
-                }
-            }
-
-            MediaView {
-                id: newMusicRow
-
-                AccessibleCompat.id: "newMusic"
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-
-                height: currentItem?.contentHeight ?? implicitHeight
-
-                visible: model.count !== 0
-
-                listHeaderPositioning: ListView.InlineHeader
-                enableBeginningFade: false
-                enableEndFade: false
-                listSectionProperty: ""
-
-                interactive: false
-
-                emptyLabel: null
-
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
-
-                listCoverWidth: root.listCoverWidth
-                listCoverHeight: root.listCoverHeight
-                listCoverRadius: root.listCoverRadius
 
                 Navigation.parentItem: mediaRows
+            }
+        }
+    }
 
-                model: MLAudioModel {
-                    ml: MediaLib
+    component SectionSpacer: Item {
+        width: 1
+        height: VLCStyle.dp(76, VLCStyle.scale)
+    }
 
-                    sortCriteria: root.sort.criteria || "insertion"
-                    sortOrder: root.sort.order
-                    searchPattern: root.search.pattern
+    // single row of fixed size cards, aligned with the grids
+    component CardRow: ListView {
+        id: cardRow
 
-                    // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(newMusicRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+        property int cardHeight: VLCStyle.musicCard_size
+
+        readonly property int contentLeftMargin: VLCStyle.layout_left_margin
+        readonly property int contentRightMargin: VLCStyle.layout_right_margin
+
+        anchors.left: parent?.left
+        anchors.right: parent?.right
+
+        height: cardHeight
+
+        orientation: ListView.Horizontal
+        interactive: false
+        clip: true
+
+        leftMargin: contentLeftMargin
+        rightMargin: contentRightMargin
+
+        focus: true
+        activeFocusOnTab: true
+        keyNavigationEnabled: true
+        highlightFollowsCurrentItem: true
+
+        Keys.priority: Keys.AfterItem
+        Keys.onPressed: (event) => {
+            if (KeyHelper.matchOk(event) && cardRow.currentItem) {
+                cardRow.currentItem.activated()
+                event.accepted = true
+                return
+            }
+            Navigation.defaultKeyAction(event)
+        }
+    }
+
+    // square music card: cover, title (FG/2), duration (FG/A3)
+    component MusicCard: T.ItemDelegate {
+        id: card
+
+        required property var model
+        required property int index
+
+        signal activated()
+        signal contextMenu(point globalPos)
+
+        // video entries of the history are skipped
+        readonly property bool _shown: model.isVideo === false
+
+        visible: _shown
+        width: _shown ? VLCStyle.musicCard_size + VLCStyle.card_spacing : 0
+        height: ListView.view.height
+        padding: 0
+        rightPadding: VLCStyle.card_spacing
+
+        onDoubleClicked: card.activated()
+        onClicked: ListView.view.currentIndex = index
+
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: (eventPoint) => card.contextMenu(card.mapToGlobal(eventPoint.position.x, eventPoint.position.y))
+        }
+
+        Accessible.name: titleText.text
+
+        background: null
+
+        contentItem: Column {
+            spacing: 0
+
+            Widgets.ImageExt {
+                width: VLCStyle.musicCard_size
+                height: VLCStyle.musicCard_size
+
+                radius: VLCStyle.radius_large
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                sourceSize: Qt.size(width * 2, height * 2)
+
+                source: (card.model.small_cover?.toString() ?? "") || VLCStyle.noArtAlbumCover
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    color: "transparent"
+                    border.width: card.visualFocus || (card.ListView.isCurrentItem && card.ListView.view.activeFocus)
+                                  ? VLCStyle.focus_border * 2 : 0
+                    border.color: theme.visualFocus
                 }
 
-                onActiveFocusChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        contentYBehavior.enabled = true
-                        Helpers.positionFlickableToContainItem(flickable, item ?? this)
-                        contentYBehavior.enabled = false
-                    }
+                Widgets.PlayCover {
+                    anchors.centerIn: parent
+                    visible: card.hovered
+                    onTapped: card.activated()
                 }
+            }
 
-                onCurrentIndexChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        if (item) {
-                            contentYBehavior.enabled = true
-                            Helpers.positionFlickableToContainItem(flickable, item)
-                            contentYBehavior.enabled = false
-                        }
-                    }
+            Text {
+                id: titleText
+
+                topPadding: VLCStyle.dp(19, VLCStyle.scale) - VLCStyle.space_4
+                width: VLCStyle.musicCard_size
+                text: card.model.title || qsTr("Unknown title")
+                elide: Text.ElideRight
+                font.pixelSize: VLCStyle.fontSize_body
+                color: (root._palette.isDark ? root._palette.fg2 : root._palette.fgA1)
+            }
+
+            Text {
+                topPadding: VLCStyle.space_4
+                width: VLCStyle.musicCard_size
+                text: card.model.duration?.formatHMS() ?? ""
+                elide: Text.ElideRight
+                font.pixelSize: VLCStyle.fontSize_body
+                color: root._palette.fgA3
+            }
+        }
+    }
+
+    // square BG/A2 card with a centered folder glyph
+    component FolderCard: T.ItemDelegate {
+        id: folderCard
+
+        required property var model
+        required property int index
+
+        signal activated()
+
+        width: VLCStyle.musicCard_size + VLCStyle.card_spacing
+        height: ListView.view.height
+        padding: 0
+        rightPadding: VLCStyle.card_spacing
+
+        hoverEnabled: true
+
+        onClicked: folderCard.activated()
+
+        Accessible.name: folderTitle.text
+
+        background: null
+
+        contentItem: Column {
+            spacing: 0
+
+            Rectangle {
+                width: VLCStyle.musicCard_size
+                height: VLCStyle.musicCard_size
+
+                radius: VLCStyle.radius_large
+                color: folderCard.hovered ? root._palette.bgA1 : root._palette.bgA2
+                border.width: folderCard.visualFocus || (folderCard.ListView.isCurrentItem && folderCard.ListView.view.activeFocus)
+                              ? VLCStyle.focus_border * 2 : 0
+                border.color: theme.visualFocus
+
+                Widgets.FolderIcon {
+                    anchors.centerIn: parent
+                    glyphSize: VLCStyle.dp(32, VLCStyle.scale)
+                    color: root._palette.fgA2
                 }
+            }
+
+            Text {
+                id: folderTitle
+
+                topPadding: VLCStyle.dp(19, VLCStyle.scale) - VLCStyle.space_4
+                width: VLCStyle.musicCard_size
+                text: folderCard.model.title ?? ""
+                elide: Text.ElideRight
+                font.pixelSize: VLCStyle.fontSize_body
+                color: root._palette.fgA2
             }
         }
     }

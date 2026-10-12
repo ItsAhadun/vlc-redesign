@@ -13,6 +13,19 @@ bool NavigationHistory::isPreviousEmpty()
     return m_history.size() <= 1;
 }
 
+bool NavigationHistory::isNextEmpty() const
+{
+    return m_forward.empty();
+}
+
+void NavigationHistory::clearForward()
+{
+    if (m_forward.empty())
+        return;
+    m_forward.clear();
+    emit nextEmptyChanged(true);
+}
+
 void NavigationHistory::push(QStringList path, const QVariantMap& properties, Qt::FocusReason focusReason)
 {
     auto prop = std::make_unique<QQmlPropertyMap>();
@@ -20,6 +33,7 @@ void NavigationHistory::push(QStringList path, const QVariantMap& properties, Qt
         prop->insert((*it).first, (*it).second);
 
     m_history.emplace_back(path, std::move(prop));
+    clearForward();
 
     updateCurrent();
 
@@ -32,6 +46,7 @@ void NavigationHistory::push(QStringList path, const QVariantMap& properties, Qt
 void NavigationHistory::push(QStringList path, Qt::FocusReason focusReason)
 {
     m_history.emplace_back(path, std::make_unique<QQmlPropertyMap>());
+    clearForward();
 
     updateCurrent();
 
@@ -139,7 +154,11 @@ void NavigationHistory::previous(Qt::FocusReason reason)
     if (m_history.size() == 1)
         return;
 
+    const bool wasNextEmpty = m_forward.empty();
+    m_forward.push_back(std::move(m_history.back()));
     m_history.pop_back();
+    if (wasNextEmpty)
+        emit nextEmptyChanged(false);
 
     while (!isNodeValid(*m_history.back().second)) {
         m_history.pop_back();
@@ -152,6 +171,28 @@ void NavigationHistory::previous(Qt::FocusReason reason)
 
     updateCurrent();
     emit navigate(reason);
+}
+
+void NavigationHistory::next(Qt::FocusReason reason)
+{
+    while (!m_forward.empty())
+    {
+        auto entry = std::move(m_forward.back());
+        m_forward.pop_back();
+        if (!isNodeValid(*entry.second))
+            continue;
+
+        m_history.push_back(std::move(entry));
+        if (m_forward.empty())
+            emit nextEmptyChanged(true);
+        if (m_history.size() == 2)
+            emit previousEmptyChanged(false);
+
+        updateCurrent();
+        emit navigate(reason);
+        return;
+    }
+    emit nextEmptyChanged(true);
 }
 
 void NavigationHistory::updateCurrent()

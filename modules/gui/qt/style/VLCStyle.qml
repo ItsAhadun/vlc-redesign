@@ -457,13 +457,10 @@ QtObject {
     }
 
     //dynamic margins based on screen width
+    // Redesign: the library content uses fixed gutters (design/SPEC.md 1.5,
+    // 28 px after the nav pane, 16 px on the right), provided by
+    // layout_left_margin/layout_right_margin and the main view position.
     function dynamicAppMargins(width : int) : int {
-        if (width < smallWidth)
-            return margin_normal;
-        else if(width > mediumWidth)
-            return margin_large;
-        else
-            return margin_normal + (width - smallWidth) * (margin_large - margin_normal) /
-                    (mediumWidth - smallWidth);
+        return 0
     }
 }

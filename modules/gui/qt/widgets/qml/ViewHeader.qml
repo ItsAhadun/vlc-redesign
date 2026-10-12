@@ -30,6 +30,9 @@ import VLC.Util
 T.Pane {
     id: root
 
+    // the ColorContext palette is null until it is inherited from a parent context
+    readonly property var _palette: theme.palette ?? VLCStyle.palette
+
     // Properties
     required property Item view
 
@@ -78,25 +81,40 @@ T.Pane {
       console.assert(contentItem === root.row)
     }
 
+    // Redesign section title (design/SPEC.md 2.1 Home): 16 px FG/2 title
+    // followed by a ">" chevron opening the whole section
     RowLayout {
         id: row
 
         anchors.fill: parent
 
-        SubtitleLabel {
+        spacing: VLCStyle.space_4
+
+        Text {
             id: label
 
-            Layout.fillWidth: true
+            Layout.maximumWidth: row.width - (button.visible ? button.width + row.spacing : 0)
 
-            color: theme.fg.primary
+            elide: Text.ElideRight
+            font.pixelSize: VLCStyle.fontSize_title
+            font.weight: VLCStyle.fontWeight_medium
+            color: (root._palette.isDark ? root._palette.fg2 : root._palette.fgA1)
+
+            Accessible.role: Accessible.Heading
+
+            TapHandler {
+                enabled: button.visible
+                onTapped: root.seeAllButtonClicked(Qt.MouseFocusReason)
+            }
         }
 
-        TextToolButton {
+        IconToolButton {
             id: button
 
             visible: false
 
-            Layout.preferredWidth: implicitWidth
+            Layout.preferredWidth: VLCStyle.icon_normal
+            Layout.preferredHeight: VLCStyle.icon_normal
 
             focus: true
 
@@ -105,13 +123,21 @@ T.Pane {
                 value: root.focusReason
             }
 
-            text: qsTr("See All")
+            // TODO(icons): redesign "chevron-right" glyph
+            text: VLCIcons.ic_fluent_chevron_right_24
+            description: qsTr("See All")
 
-            font.pixelSize: VLCStyle.fontSize_large
+            font.pixelSize: VLCStyle.icon_normal * 0.75
+            radius: VLCStyle.radius_small
+            color: root._palette.fgA2
 
             Navigation.parentItem: root
 
             onClicked: root.seeAllButtonClicked(focusReason)
+        }
+
+        Item {
+            Layout.fillWidth: true
         }
     }
 }

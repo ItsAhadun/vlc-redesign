@@ -48,6 +48,13 @@ T.ItemDelegate {
     // if the item is selected
     property bool selected: false
 
+    // title styling (the redesign cards use a regular FG/A2 title, dimmed when watched)
+    property color titleColor: root.selected ? theme.fg.highlight : theme.fg.primary
+    property int titleWeight: Font.DemiBold
+
+    // drop shadows under the picture
+    property bool showShadows: true
+
     // Aliases
 
     property alias mediaCover: picture
@@ -321,13 +328,13 @@ T.ItemDelegate {
             DefaultShadow {
                 id: unselectedShadow
 
-                visible: opacity > 0
+                visible: root.showShadows && opacity > 0
             }
 
             DoubleShadow {
                 id: selectedShadow
 
-                visible: opacity > 0
+                visible: root.showShadows && opacity > 0
                 opacity: 0
 
                 primaryVerticalOffset: VLCStyle.dp(6, VLCStyle.scale)
@@ -357,9 +364,8 @@ T.ItemDelegate {
                 id: titleLabel
 
                 height: implicitHeight
-                color: root.selected
-                    ? theme.fg.highlight
-                    : theme.fg.primary
+                color: root.titleColor
+                font.weight: root.titleWeight
             }
         }
 

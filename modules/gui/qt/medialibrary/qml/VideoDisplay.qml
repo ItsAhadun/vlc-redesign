@@ -47,10 +47,12 @@ Widgets.PageLoader {
             name: "all",
             default: true,
             displayText: qsTr("All"),
+            breadcrumb: false, // the nav pane has its own "Playlists" page
             url: "qrc:///qt/qml/VLC/MediaLibrary/VideoAllDisplay.qml"
         },{
             name: "playlists",
             displayText: qsTr("Playlists"),
+            breadcrumb: false,
             url: "qrc:///qt/qml/VLC/MediaLibrary/VideoPlaylistsDisplay.qml"
         }
     ]

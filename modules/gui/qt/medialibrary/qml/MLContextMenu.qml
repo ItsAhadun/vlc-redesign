@@ -23,6 +23,7 @@ import VLC.MediaLibrary
 import VLC.Dialogs
 
 import VLC.Util
+import VLC.Style
 
 // @brief - a generic ML context menu
 NativeMenu {
@@ -53,46 +54,58 @@ NativeMenu {
 
     // Settings
 
+    // TODO(icons): switch to the redesign glyphs once the icon font is regenerated
     actions: [{
             "text": qsTr("Play"),
+            "icon": VLCIcons.play,
             "action": addAndPlay
         }, {
             "text": qsTr("Play as audio"),
+            "icon": VLCIcons.volume_high,
             "action": playAsAudio,
             "visible": root.showPlayAsAudioAction
         }, {
             "text": qsTr("Play as album"),
+            "icon": VLCIcons.album_cover,
             "action": playAsAlbum,
             "visible": root.showPlayAsAlbumAction &&
                        (root.model instanceof MLAudioModel)
         }, {
             "text": qsTr("Enqueue"),
+            "icon": VLCIcons.enqueue,
             "action": enqueue
         }, {
             "text": qsTr("Enqueue as album"),
+            "icon": VLCIcons.enqueue,
             "action": enqueueAsAlbum,
             "visible": root.showPlayAsAlbumAction &&
                        (root.model instanceof MLAudioModel)
         }, {
             "text": qsTr("Add to favorites"),
+            "icon": VLCIcons.bookmark,
             "action": addFavorite,
             "visible": _showAddFavorite
         }, {
             "text": qsTr("Remove from favorites"),
+            "icon": VLCIcons.bookmark,
             "action": removeFavorite,
             "visible": _showRemoveFavorite
         }, {
             "text": (root.showPlayAsAudioAction ? qsTr("Add to a video-only playlist") : qsTr("Add to an audio-only playlist")),
+            "icon": VLCIcons.playlist,
             "action": (root.showPlayAsAudioAction ? root.addToVideoOnlyPlaylist : root.addToAudioOnlyPlaylist)
         }, {
             "text": qsTr("Add to a playlist"),
+            "icon": VLCIcons.playlist,
             "action": addToAPlaylist
         }, {
             "text": qsTr("Mark as seen"),
+            "icon": VLCIcons.check,
             "action": markSeen,
             "visible": _showSeen
         }, {
             "text": qsTr("Mark as unseen"),
+            "icon": VLCIcons.circle,
             "action": markUnseen,
             "visible": _showUnseen
         }, {
@@ -101,18 +114,22 @@ NativeMenu {
             "visible": _openContainingFolder
         }, {
             "text": qsTr("Delete"),
+            "icon": VLCIcons.del,
             "action": deleteStream,
             "visible": _deleteStream
         }, {
             "text": qsTr("Information"),
+            "icon": VLCIcons.info,
             "action": _signalShowInformation,
             "visible": showInformationAvailable
         },{
             "text": qsTr("Delete File From System"),
+            "icon": VLCIcons.del,
             "action": deleteFileFromSource,
             "visible": _deleteFileFromSource
         },{
             "text": qsTr("Media Information"),
+            "icon": VLCIcons.info,
             "action": function(dataList, options, indexes) {
                 DialogsProvider.mediaInfoDialog(dataList[0][idDataRole])
             },

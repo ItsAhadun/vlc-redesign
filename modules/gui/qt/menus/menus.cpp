@@ -752,6 +752,20 @@ QMenu* VLCMenuBar::PopupMenu( qt_intf_t *p_intf, bool show )
     bool b_isFullscreen = false;
 
     PopupMenuPlaylistEntries( menu, p_intf );
+
+    /* Redesign "Hide UI" (design/SPEC.md 3.9 right-click menu), handled by
+     * the player page (Ctrl + \ toggles it too) */
+    if( p_intf->p_mi && p_intf->p_mi->isPlayerView() )
+    {
+        MainCtx* mainCtx = p_intf->p_mi;
+        const bool hidden = mainCtx->property( "playerHideUI" ).toBool();
+        action = menu->addAction( hidden ? qtr( "Show UI" ) : qtr( "Hide UI" ) );
+        action->setText( action->text() + QStringLiteral( "\tCtrl+\\" ) );
+        QObject::connect( action, &QAction::triggered, mainCtx, [mainCtx, hidden]() {
+            mainCtx->setProperty( "playerHideUI", !hidden );
+        } );
+        menu->addSeparator();
+    }
     menu->addSeparator();
 
     if( p_input )

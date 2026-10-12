@@ -17,6 +17,7 @@
  *****************************************************************************/
 
 import QtQuick
+import QtQuick.Templates as T
 
 
 import VLC.MainInterface
@@ -24,6 +25,10 @@ import VLC.Style
 import VLC.Menus
 import VLC.Widgets as Widgets
 
+// Sort button + "Sorting Options" popup (design/SPEC.md 3.9, 856:2215): the
+// sort keys (current one in the accent color), the order, and the extra
+// options of a custom `menu` (video grouping, album sections).
+// An accent dot on the button tells that a non default sorting is applied.
 Widgets.IconToolButton {
     id: root
 
@@ -35,7 +40,7 @@ Widgets.IconToolButton {
 
     property real listWidth: VLCStyle.widthSortBox
 
-    // NOTE: This allows us provide a custom menu and override sortMenu.
+    // NOTE: This allows us provide extra options (SortMenuVideo, SortMenuAlbums)
     property SortMenu menu
 
     // properties that should be handled by parent
@@ -43,16 +48,23 @@ Widgets.IconToolButton {
     property var sortKey: undefined
     property var sortOrder: undefined
 
-    // Private
-
-    property SortMenu _menu: (menu) ? menu
-                                    : sortMenu
+    // whether the current sorting differs from the default one
+    readonly property bool nonDefault: {
+        if (!root.model || root.model.length === 0)
+            return false
+        const keyIsDefault = (root.sortKey === undefined || root.sortKey === ""
+                              || root.sortKey === root.model[0].criteria
+                              || !root.model.some((entry) => entry.criteria === root.sortKey))
+        // the order only matters for an explicitly chosen key
+        return !keyIsDefault || (root.sortKey !== undefined && root.sortKey !== ""
+                                 && root.sortOrder === Qt.DescendingOrder)
+    }
 
     // Signals
 
     // sortSelected is triggered with new sorting key when a different sorting key is selected
     // sortOrderSelected is triggered with Qt.AscendingOrder when different sorting key is selected
-    // sortOrderSelected is triggered with Qt.AscendingOrder or Qt.DescendingOrder when the same sorting key is selected
+    // sortOrderSelected is triggered with Qt.AscendingOrder or Qt.DescendingOrder when the order is selected
     signal sortSelected(var key)
     signal sortOrderSelected(int type)
 
@@ -63,9 +75,10 @@ Widgets.IconToolButton {
 
     description: qsTr("Sort")
 
+    // TODO(icons): redesign "sort" glyph
     text: VLCIcons.topbar_sort
 
-    checked: _menu && _menu.shown
+    checked: sortPopup.visible
 
     Keys.priority: Keys.AfterItem
     Keys.onPressed: (event) => Navigation.defaultKeyAction(event)
@@ -74,56 +87,120 @@ Widgets.IconToolButton {
     // Events
 
     onClicked: root.show()
-    onVisibleChanged: if (!visible) _menu.close()
-    onEnabledChanged: if (!enabled) _menu.close()
-
-    // Connections
-
-    Connections {
-        target: (_menu) ? _menu : null
-
-        function onSelected(index: int) {
-            const selectedSortKey = root.model[index].criteria
-
-            if (root.sortKey !== selectedSortKey) {
-                root.sortSelected(selectedSortKey)
-                root.sortOrderSelected(Qt.AscendingOrder)
-            } else {
-                root.sortOrderSelected(root.sortOrder === Qt.AscendingOrder ? Qt.DescendingOrder
-                                                                            : Qt.AscendingOrder)
-            }
-        }
-    }
+    onVisibleChanged: if (!visible) sortPopup.close()
+    onEnabledChanged: if (!enabled) sortPopup.close()
 
     // Functions
 
     function show() {
-        const model = root.model.map(function(modelData) {
-            const checked = modelData.criteria === sortKey
-            const order = checked ? root.sortOrder : undefined
-            return {
-                "text": modelData.text,
-                "checked": checked,
-                "order": order
-            }
-        })
-
-        let point
+        if (sortPopup.visible) {
+            sortPopup.close()
+            return
+        }
 
         if (root.popupAbove)
-            point = root.mapToGlobal(0, - VLCStyle.margin_xxsmall)
+            sortPopup.popup(root, 0, - sortPopup.implicitHeight - VLCStyle.margin_xxsmall)
         else
-            point = root.mapToGlobal(0, root.height + VLCStyle.margin_xxsmall)
-
-        root._menu.popup(point, root.popupAbove, model)
+            sortPopup.popup(root, 0, root.height + VLCStyle.margin_xxsmall)
     }
 
     // Children
 
-    SortMenu {
-        id: sortMenu
+    // non default sorting indicator
+    Rectangle {
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.rightMargin: VLCStyle.dp(3, VLCStyle.scale)
+        anchors.topMargin: VLCStyle.dp(3, VLCStyle.scale)
 
-        ctx: MainCtx
+        width: VLCStyle.dp(4, VLCStyle.scale)
+        height: width
+        radius: width / 2
+
+        visible: root.nonDefault
+        color: (root.colorContext.palette ?? VLCStyle.palette).accentMain
+    }
+
+    Widgets.MenuExt {
+        id: sortPopup
+
+        menuPalette: root.colorContext.palette
+
+        Instantiator {
+            model: root.model
+
+            delegate: Widgets.MenuItemExt {
+                required property var modelData
+
+                text: modelData.text
+                selected: (modelData.criteria === root.sortKey)
+
+                onTriggered: {
+                    if (root.sortKey !== modelData.criteria) {
+                        root.sortSelected(modelData.criteria)
+                        root.sortOrderSelected(Qt.AscendingOrder)
+                    }
+                }
+            }
+
+            onObjectAdded: (index, object) => sortPopup.insertItem(index, object)
+            onObjectRemoved: (index, object) => sortPopup.removeItem(object)
+        }
+
+        Widgets.MenuSeparatorExt { menuPalette: sortPopup.menuPalette }
+
+        Widgets.MenuItemExt {
+            text: qsTr("Ascending")
+            selected: root.sortOrder === Qt.AscendingOrder
+            onTriggered: root.sortOrderSelected(Qt.AscendingOrder)
+        }
+
+        Widgets.MenuItemExt {
+            text: qsTr("Descending")
+            selected: root.sortOrder === Qt.DescendingOrder
+            onTriggered: root.sortOrderSelected(Qt.DescendingOrder)
+        }
+
+        // video grouping (SortMenuVideo)
+        Widgets.MenuSeparatorExt {
+            visible: root.menu instanceof SortMenuVideo
+            height: visible ? implicitHeight : 0
+            menuPalette: sortPopup.menuPalette
+        }
+
+        Widgets.MenuItemExt {
+            visible: root.menu instanceof SortMenuVideo
+            text: qsTr("Do not group videos")
+            selected: MainCtx.grouping === MainCtx.GROUPING_NONE
+            onTriggered: MainCtx.grouping = MainCtx.GROUPING_NONE
+        }
+
+        Widgets.MenuItemExt {
+            visible: root.menu instanceof SortMenuVideo
+            text: qsTr("Group by name")
+            selected: MainCtx.grouping === MainCtx.GROUPING_NAME
+            onTriggered: MainCtx.grouping = MainCtx.GROUPING_NAME
+        }
+
+        Widgets.MenuItemExt {
+            visible: root.menu instanceof SortMenuVideo
+            text: qsTr("Group by folder")
+            selected: MainCtx.grouping === MainCtx.GROUPING_FOLDER
+            onTriggered: MainCtx.grouping = MainCtx.GROUPING_FOLDER
+        }
+
+        // album sections (SortMenuAlbums)
+        Widgets.MenuSeparatorExt {
+            visible: (root.menu instanceof SortMenuAlbums) && root.menu.sectionsVisible
+            height: visible ? implicitHeight : 0
+            menuPalette: sortPopup.menuPalette
+        }
+
+        Widgets.MenuItemExt {
+            visible: (root.menu instanceof SortMenuAlbums) && root.menu.sectionsVisible
+            text: qsTr("Album sections")
+            selected: MainCtx.albumSections
+            onTriggered: MainCtx.albumSections = !MainCtx.albumSections
+        }
     }
 }
-

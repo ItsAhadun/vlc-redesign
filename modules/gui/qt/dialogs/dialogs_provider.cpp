@@ -57,6 +57,7 @@
 #include "dialogs/epg/epg.hpp"
 #include "dialogs/playlists/playlists.hpp"
 #include "dialogs/firstrun/firstrunwizard.hpp"
+#include "medialibrary/medialib.hpp"
 
 #include <vlc_url.h>
 
@@ -804,6 +805,26 @@ static void openDirectory( qt_intf_t *p_intf, bool go )
         QVector<vlc::playlist::Media> medias = { {uri, QString {}} };
         THEMPL->append(medias, go);
     }
+}
+
+void DialogsProvider::addMediaLibraryFolder()
+{
+    MediaLib* ml = p_intf->p_mi->getMediaLibrary();
+    if( !ml )
+        return;
+
+    const QUrl dirurl = QFileDialog::getExistingDirectoryUrl( NULL,
+            qtr( "Choose a folder to add to the Media Library" ),
+            p_intf->p_mi->getDialogFilePath(), QFileDialog::ShowDirsOnly );
+    if( dirurl.isEmpty() )
+        return;
+
+    p_intf->p_mi->setDialogFilePath( dirurl );
+
+    const QByteArray mrl = dirurl.toString( QUrl::FullyEncoded ).toUtf8();
+    ml->runOnMLThread( this, [mrl]( vlc_medialibrary_t* p_ml ) {
+        vlc_ml_add_folder( p_ml, mrl.constData() );
+    });
 }
 
 QString DialogsProvider::getDirectoryDialog( qt_intf_t *p_intf )

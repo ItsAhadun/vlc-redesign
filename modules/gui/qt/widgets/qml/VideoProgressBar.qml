@@ -24,7 +24,8 @@ import VLC.Style
 Item {
     id: progressBar
 
-    implicitHeight: VLCStyle.dp(4, VLCStyle.scale)
+    // Redesign: Accent/Main watched progress along the thumbnail bottom (design/SPEC.md 1.3)
+    implicitHeight: VLCStyle.watchedProgress_height
 
     clip :true
 
@@ -36,24 +37,28 @@ Item {
         colorSet: ColorContext.Slider
     }
 
-    Rectangle {
-        id: rectangle
-
+    // the played part, the rounded rectangle below spans the whole bar so
+    // that the bottom corners follow the thumbnail rounding
+    Item {
         anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.bottom: parent.bottom
 
-        height: Math.max(progressBar.radius * 2, //to have at least the proper radius applied
-                         parent.height + radius) //the top radius section should be always clipped
+        width: parent.width * Math.max(0, Math.min(1, progressBar.value))
+        clip: true
 
-        //FIXME do we want it always white or do we want it to change with the theme
-        color: "white"
-        radius: progressBar.radius
+        Rectangle {
+            id: rectangle
 
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: progressBar.value; color: theme.fg.primary }
-            GradientStop { position: progressBar.value + (1. / rectangle.width); color: rectangle.color }
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+
+            width: progressBar.width
+            height: Math.max(progressBar.radius * 2, //to have at least the proper radius applied
+                             progressBar.height + radius) //the top radius section should be always clipped
+
+            radius: progressBar.radius
+            color: (theme.palette ?? VLCStyle.palette).accentMain
         }
     }
 }

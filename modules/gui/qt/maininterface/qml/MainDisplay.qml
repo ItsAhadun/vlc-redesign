@@ -38,23 +38,14 @@ FocusScope {
 
     property bool hasMiniPlayer: miniPlayer.visible
 
-    // NOTE: The main view must be above the indexing bar and the mini player.
-    property real displayMargin: (height - miniPlayer.y) +
-                                 (loaderUpdatePane.active ? loaderUpdatePane.height : 0)
+    // NOTE: The main view must be above the indexing bar. The mini player is
+    //       a floating card over the content (design/SPEC.md 2.2).
+    property real displayMargin: (loaderUpdatePane.active ? loaderUpdatePane.height : 0)
 
     //MainDisplay behave as a PageLoader
     property alias pagePrefix: stackView.pagePrefix
 
-    readonly property int positionSliderY: {
-        var size = miniPlayer.y + miniPlayer.sliderY
-
-        if (MainCtx.pinVideoControls)
-            return size - VLCStyle.margin_xxxsmall
-        else
-            return size
-    }
-
-    property bool _showMiniPlayer: false
+    readonly property int positionSliderY: miniPlayer.y
 
     property bool _showCSD: MainCtx.clientSideDecoration
         && !(MainCtx.intfMainWindow.visibility === Window.FullScreen)
@@ -63,12 +54,7 @@ FocusScope {
 
     //MainDisplay behave as a PageLoader
     function loadView(path, properties, focusReason) {
-        const found = stackView.loadView(path, properties, focusReason)
-        if (!found)
-            return
-
-        if (Player.hasVideoOutput && MainCtx.hasEmbededVideo)
-            _showMiniPlayer = true
+        stackView.loadView(path, properties, focusReason)
     }
 
     function loadCurrentHistoryView(focusReason) {
@@ -77,12 +63,9 @@ FocusScope {
     }
 
     Component.onCompleted: {
-        if (MainCtx.canShowVideoPIP) {
-            pipPlayerComponent.createObject(this)
-        } else {
-            if (MainCtx.hasEmbededVideo)
-                MainPlaylistController.stop()
-        }
+        // the video is shown in the mini player card when possible
+        if (!MainCtx.canShowVideoPIP && MainCtx.hasEmbededVideo)
+            MainPlaylistController.stop()
 
         if (History.previousEmpty) {
             History.update(["home"])
@@ -107,21 +90,30 @@ FocusScope {
     readonly property var pageModel: [
         {
             name: "home",
+            displayText: qsTr("Home"),
             url: MainCtx.mediaLibraryAvailable ?
                  "qrc:///qt/qml/VLC/MediaLibrary/HomeDisplay.qml" :
                  "qrc:///qt/qml/VLC/MainInterface/NoMedialibHome.qml"
         }, {
             name: "video",
+            displayText: qsTr("Videos"),
             url: "qrc:///qt/qml/VLC/MediaLibrary/VideoDisplay.qml"
         }, {
             name: "music",
+            displayText: qsTr("Music"),
             url: "qrc:///qt/qml/VLC/MediaLibrary/MusicDisplay.qml"
         }, {
             name: "network",
+            displayText: qsTr("Network"),
             url: "qrc:///qt/qml/VLC/Network/BrowseDisplay.qml"
         }, {
-            name: "discover",
-            url: "qrc:///qt/qml/VLC/Network/DiscoverDisplay.qml"
+            name: "playlists",
+            displayText: qsTr("Playlists"),
+            url: "qrc:///qt/qml/VLC/MediaLibrary/PlaylistsDisplay.qml"
+        }, {
+            name: "recent",
+            displayText: qsTr("Recent"),
+            url: "qrc:///qt/qml/VLC/MediaLibrary/RecentDisplay.qml"
         }, {
             name: "mlsettings",
             url: "qrc:///qt/qml/VLC/MediaLibrary/MLFoldersSettings.qml"
@@ -249,8 +241,8 @@ FocusScope {
         }
     }
 
-    LocalTopbar {
-        id: localTopbar
+    AppTitleBar {
+        id: titleBar
         z: 5
 
         anchors {
@@ -259,35 +251,16 @@ FocusScope {
             right: parent.right
         }
 
-        leftPadding: VLCStyle.applicationHorizontalMargin
-        rightPadding: VLCStyle.applicationHorizontalMargin
-        topPadding: menuTopbar.visible ? 0 : VLCStyle.applicationVerticalMargin
-
-        plListView: {
-            if (playlistLoader.active)
-                return playlistLoader.item
-            else if (playlistWindowLoader.status === Loader.Ready)
-                return playlistWindowLoader.item.playlistView
-            else
-                return null
-        }
-
-        navigationVisible: pannelVisiblity.showNavigation
-        playqueueVisible: pannelVisiblity.showPlayqueue
-
         Navigation.parentItem: g_mainDisplay
         Navigation.upItem: menuTopbar
         Navigation.downItem: mainRow
-
-        onToggleNavigationVisibility: pannelVisiblity.toggleNavigationVisibility()
-        onTogglePlayqueueVisibility:  pannelVisiblity.togglePlayqueueVisibility()
     }
 
     FocusScope {
         id: mainRow
 
         anchors {
-            top: localTopbar.bottom
+            top: titleBar.bottom
             right: parent.right
             left: parent.left
             bottom: parent.bottom
@@ -316,11 +289,11 @@ FocusScope {
             implicitWidth: stackView.implicitWidth
             implicitHeight: stackView.implicitHeight
 
-            color: theme.bg.primary
+            color: theme.palette.bgB1
 
             layer.enabled: MainCtx.backdropBlurRequested() &&
                            (GraphicsInfo.shaderType === GraphicsInfo.RhiShader) &&
-                           (miniPlayer.visible || !!loaderUpdatePane.item?.visible)
+                           !!loaderUpdatePane.item?.visible
 
             // Blurring requires to access neighbour pixels, thus the source texture should be bigger than
             // the effect so that the effect have access to the neighbor pixels for the pixels near the
@@ -397,7 +370,7 @@ FocusScope {
                 effectRect: Qt.rect(-stackView.x,
                                     stackView.height - stackViewParent.edgeExtension,
                                     stackViewParent.width + 2 * stackViewParent.edgeExtension,
-                                    loaderUpdatePane.height + miniPlayer.height + 2 * stackViewParent.edgeExtension)
+                                    loaderUpdatePane.height + 2 * stackViewParent.edgeExtension)
 
                 // WARNING: We are not using `sourceVisualRect` because it is not trivial to guarantee that
                 //          the visual (`ShaderEffect`) scene graph sizing and sub-texturing are synchronized.
@@ -446,60 +419,16 @@ FocusScope {
                 focus: true
 
                 anchors.fill: parent
-                anchors.leftMargin: (sidebar.visible && (VLCStyle.isScreenSmall ? (sidebar.state === "") : true)) ? sidebar.width : 0.0
+                // content starts 28 px after the nav pane (design/SPEC.md 1.5), the
+                // views add VLCStyle.layout_left_margin themselves
+                anchors.leftMargin: (sidebar.visible ? sidebar.x + sidebar.width : 0)
+                                    + VLCStyle.libraryContent_leftMargin - VLCStyle.layout_left_margin
                 anchors.rightMargin: (playlistLoader.shown && !VLCStyle.isScreenSmall)
                                      ? playlistLoader.width
                                      : 0
                 anchors.bottomMargin: g_mainDisplay.displayMargin
 
-                // Prevent animating x on collapse with overlayed side navigation bar:
-                Binding on anchors.leftMargin {
-                    when: (VLCStyle.isScreenSmall && sidebar.state === "" && sidebarTransition.running)
-                    value: 0.0
-                }
-
                 pageModel: g_mainDisplay.pageModel
-
-                leftPadding: sidebar.visible  ? 0 : VLCStyle.applicationHorizontalMargin
-
-                rightPadding: playlistLoader.shown ? 0 : VLCStyle.applicationHorizontalMargin
-
-                // Top-left corner rounding:
-                Widgets.AcrylicBackground {
-                    id: topLeftCornerBackground
-
-                    z: 99
-                    color: sidebar.background.color
-                    visible: sidebar.visible && (stackViewTopLeftRadiusRectangle.topLeftRadius !== undefined)
-
-                    anchors.left: stackView.left
-                    anchors.leftMargin: -1
-                    anchors.top: stackView.top
-
-                    // (-1) is to prevent seams
-                    width: stackViewTopLeftRadiusRectangle.width - 1
-                    height: stackViewTopLeftRadiusRectangle.height - 1
-
-                    Rectangle {
-                        id: stackViewTopLeftRadiusRectangle
-
-                        width: (stackViewTopLeftRadiusRectangle.topLeftRadius * 2)
-                        height: (stackViewTopLeftRadiusRectangle.topLeftRadius * 2)
-
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.leftMargin: 1
-
-                        color: stackViewParent.color
-
-                        property real implicitTopLeftRadius: VLCStyle.mainView_topLeftRadius
-
-                        Component.onCompleted: {
-                            if (stackViewTopLeftRadiusRectangle.topLeftRadius !== undefined) // TODO: Directly set when minimum Qt is 6.7
-                                stackViewTopLeftRadiusRectangle.topLeftRadius = Qt.binding(() => stackViewTopLeftRadiusRectangle.implicitTopLeftRadius)
-                        }
-                    }
-                }
 
                 onCurrentItemChanged: {
                     if (currentItem) {
@@ -516,7 +445,7 @@ FocusScope {
                 }
 
                 Navigation.parentItem: g_mainDisplay
-                Navigation.upItem: localTopbar
+                Navigation.upItem: titleBar
                 Navigation.rightItem: playlistLoader
                 Navigation.leftItem: sidebar
                 Navigation.downItem: loaderUpdatePane
@@ -535,7 +464,7 @@ FocusScope {
 
             height: parent.height - g_mainDisplay.displayMargin
 
-            visible: VLCStyle.isScreenSmall && (playlistLoader.shown || (sidebar.visible && (sidebar.state === "expanded")))
+            visible: VLCStyle.isScreenSmall && playlistLoader.shown
             color: "black"
             opacity: 0.4
 
@@ -556,62 +485,18 @@ FocusScope {
 
             z: 3
 
-            anchors {
-                top : parent.top
-                left: parent.left
-            }
+            // inset card: 8 px from the window edges and the title bar
+            x: VLCStyle.windowPadding
+            y: VLCStyle.windowPadding
 
-            width: VLCStyle.isScreenReallySmall ? 0.0 : collapsedWidth
+            // collapse to the icon rail on small windows
+            collapsed: VLCStyle.isScreenSmall
 
-            property real collapsedWidth: VLCStyle.icon_normal + VLCStyle.margin_small + VLCStyle.margin_xsmall + VLCStyle.applicationHorizontalMargin
-
-            delegateShowText: (state === "expanded")
-
-            visible: (width > 0.0)
-
-            height: parent.height - g_mainDisplay.displayMargin
-
-            property int maximumWidth: Math.max(minimumWidth, (g_mainDisplay.width + sidebarResizeHandle.width) / 3)
-
-            topPadding: 0
-            leftPadding: 0
-            rightPadding: sidebarResizeHandle.visible ? sidebarResizeHandle.visualBorder.width : 0.0
-            bottomPadding: VLCStyle.applicationVerticalMargin + VLCStyle.margin_small
-
-            safeAreaLeftMargin: VLCStyle.applicationHorizontalMargin
-
-            useAcrylic: (VLCStyle.isScreenSmall ? (sidebar.state === "") : true) // See `694d51a7` for the reasoning.
-
-            NavigationBarContextMenu {
-                id: navigationBarContextMenu
-
-                ctx: MainCtx
-
-                model: sidebar.model
-
-                onPageRequested: (uri) => {
-                    if (stackView.isDefaulLoadedForPath([...uri]) ||
-                        History.exactMatch(History.viewPath, uri)) {
-                        stackView.positionContentAtBeginning()
-                        return
-                    }
-
-                    History.push(uri)
-                }
-            }
+            width: implicitWidth
+            height: parent.height - g_mainDisplay.displayMargin - VLCStyle.windowPadding * 2
 
             onItemClicked: (modelUri, item) => {
                 console.assert(modelUri)
-
-                console.assert(item)
-                if ((sidebar.state !== 'expanded') && item.expandable) {
-                    // TODO: Investigate opening the menu on hover, if
-                    //       we switch to `Popup.Item` type of menus.
-                    const mappedPos = item.mapToGlobal(item.width, 0)
-                    navigationBarContextMenu.popup(item.index, mappedPos, !item.hovered)
-
-                    return
-                }
 
                 if (stackView.isDefaulLoadedForPath([...modelUri]) ||
                     !!modelUri.length && History.exactMatch(History.viewPath, modelUri)) {
@@ -622,68 +507,15 @@ FocusScope {
                 History.push(modelUri)
             }
 
-            implicitWidth: Math.round(Helpers.clamp(MainCtx.navigationPanel.width, minimumWidth, maximumWidth))
-
             Navigation.parentItem: g_mainDisplay
-            Navigation.upItem: localTopbar
+            Navigation.upItem: titleBar
             Navigation.downItem: loaderUpdatePane
             Navigation.rightItem: stackView.currentItem
-
-            state: pannelVisiblity.showNavigation ? "expanded" : ""
 
             onVisibleChanged: {
                 if (!visible) {
                     stackView.focus = true
                 }
-            }
-
-            Component.onCompleted: {
-                Qt.callLater(() => { sidebarTransition.enabled = true; })
-            }
-
-            states: State {
-                name: "expanded"
-                PropertyChanges {
-                    target: sidebar
-                    width: sidebar.implicitWidth
-                }
-            }
-
-            transitions: Transition {
-                id: sidebarTransition
-                enabled: false
-
-                from: ""; to: "expanded";
-                reversible: true
-
-                NumberAnimation {
-                    property: "width"
-                    duration: VLCStyle.duration_short
-                    easing.type: Easing.InOutSine
-                }
-            }
-
-            PaneResizeHandle {
-                id: sidebarResizeHandle
-
-                parent: sidebar
-                target: sidebar
-
-                panelObject: MainCtx.navigationPanel
-                atRight: true
-
-                resizeHandle.visible: (sidebar.state === "expanded") && !VLCStyle.isScreenSmall
-                visualBorder.visible: !topLeftCornerBackground.visible
-
-                minimumWidth: sidebar.minimumWidth
-                maximumWidth: sidebar.maximumWidth
-
-                anchors {
-                    top: parent.top
-                    bottom: parent.bottom
-                    right: parent.right
-                }
-
             }
         }
 
@@ -757,6 +589,7 @@ FocusScope {
                 leftPadding: playqueueResizeHandle.visualBorder.width
                 rightPadding: VLCStyle.applicationHorizontalMargin
                 bottomPadding: Math.max(VLCStyle.applicationVerticalMargin - g_mainDisplay.displayMargin, 0)
+                                + (miniPlayer.visible && miniPlayer.dockRight ? miniPlayer.height + VLCStyle.windowPadding : 0)
                 topPadding: VLCStyle.layoutTitle_top_padding
 
                 useAcrylic: !VLCStyle.isScreenSmall
@@ -764,7 +597,7 @@ FocusScope {
                 view.fadingEdge.pixelAlignedForDPR: !miniPlayer.visible
 
                 Navigation.parentItem: g_mainDisplay
-                Navigation.upItem: localTopbar
+                Navigation.upItem: titleBar
                 Navigation.downItem: loaderUpdatePane
                 Navigation.leftItem: stackView.currentItem
 
@@ -807,7 +640,7 @@ FocusScope {
 
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: miniPlayer.top
+        anchors.bottom: parent.bottom
 
         readonly property bool updateModelIsAvailable: (typeof UpdateModel !== 'undefined')
 
@@ -883,8 +716,7 @@ FocusScope {
 
             item.leftPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
             item.rightPadding = Qt.binding(function() { return VLCStyle.margin_large + VLCStyle.applicationHorizontalMargin })
-            item.bottomPadding = Qt.binding(function() { return VLCStyle.margin_small + (miniPlayer.visible ? 0
-                                                                                                            : VLCStyle.applicationVerticalMargin) })
+            item.bottomPadding = Qt.binding(function() { return VLCStyle.margin_small + VLCStyle.applicationVerticalMargin })
 
             item.dismissRequested.connect(loaderUpdatePane, loaderUpdatePane.dismiss)
 
@@ -976,61 +808,12 @@ FocusScope {
         }
     }
 
-    Component {
-        id: pipPlayerComponent
-
-        PIPPlayer {
-            id: playerPip
-            anchors {
-                bottom: loaderUpdatePane.top
-                left: parent.left
-                bottomMargin: VLCStyle.margin_normal
-                leftMargin: VLCStyle.margin_normal + VLCStyle.applicationHorizontalMargin
-            }
-
-            width: VLCStyle.dp(320, VLCStyle.scale)
-            height: VLCStyle.dp(180, VLCStyle.scale)
-            z: 4
-            visible: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
-            enabled: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
-
-            Binding on visible {
-                id: visibleBinding
-                when: false
-                delayed: true
-                value: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
-            }
-
-            Component.onCompleted: {
-                Qt.callLater(() => { visibleBinding.when = true })
-            }
-
-            dragXMin: VLCStyle.applicationHorizontalMargin
-            dragXMax: g_mainDisplay.width - playerPip.width - VLCStyle.applicationHorizontalMargin
-            dragYMin: localTopbar.y + localTopbar.height
-            dragYMax: loaderUpdatePane.y - playerPip.height
-
-            //keep the player visible on resize
-            Connections {
-                target: g_mainDisplay
-                function onWidthChanged() {
-                    if (playerPip.x > playerPip.dragXMax)
-                        playerPip.x = playerPip.dragXMax
-                }
-                function onHeightChanged() {
-                    if (playerPip.y > playerPip.dragYMax)
-                        playerPip.y = playerPip.dragYMax
-                }
-            }
-        }
-    }
-
     Dialogs {
         z: 10
         bgContent: g_mainDisplay
 
         anchors {
-            bottom: miniPlayer.visible ? miniPlayer.top : parent.bottom
+            bottom: parent.bottom
             left: parent.left
             right: parent.right
         }
@@ -1041,26 +824,27 @@ FocusScope {
         z: 11
 
         anchors {
-            bottom: miniPlayer.top
+            bottom: parent.bottom
             left: parent.left
             right: parent.right
             margins: VLCStyle.margin_large
         }
     }
 
-    MiniPlayer {
+    // Floating mini player card, docked bottom-right (default) or bottom-left
+    // (design/SPEC.md 2.2)
+    MiniPlayerCard {
         id: miniPlayer
 
-        anchors.left: parent.left
-        anchors.right: parent.right
+        z: 4
+
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: VLCStyle.windowPadding + g_mainDisplay.displayMargin
 
-        z: 3
+        x: dockRight ? (parent.width - width - VLCStyle.windowPadding)
+                     : VLCStyle.windowPadding
 
-        horizontalPadding: VLCStyle.applicationHorizontalMargin
-        bottomPadding: VLCStyle.applicationVerticalMargin + VLCStyle.margin_xsmall
-
-        background.visible: !stackViewParent.layer.enabled
+        dragArea: g_mainDisplay
 
         Navigation.parentItem: g_mainDisplay
         Navigation.upItem: loaderUpdatePane
@@ -1074,11 +858,8 @@ FocusScope {
     Connections {
         target: Player
         function onHasVideoOutputChanged() {
-            if (Player.hasVideoOutput && MainCtx.hasEmbededVideo) {
+            if (Player.hasVideoOutput && MainCtx.hasEmbededVideo)
                 MainCtx.playerView = true
-            } else {
-                _showMiniPlayer = false;
-            }
         }
     }
 

@@ -33,6 +33,8 @@ QtObject {
       each action is an Object and contains following keys
         "text" - (string) display text of the action
 
+        "icon" - (string) (optional) VLCIcons glyph shown before the text
+
         "action" - (function(dataList, options, indexes)) a function that will be called when action is selected
 
         "visible" - (Boolean or function(dataList,options, indexes) -> Boolean) (optional) a boolean value or function which
@@ -43,7 +45,9 @@ QtObject {
 
     property var actions: []
 
-    property alias visible: menu.visible
+    // the redesign QML menu (Widgets.MenuExt) is used when available, the
+    // native menu otherwise
+    readonly property bool visible: (_qmlMenu?.visible ?? false) || menu.visible
 
     readonly property int currentRequest: _currentRequest
 
@@ -61,6 +65,9 @@ QtObject {
     property var _effectiveActions: null
 
     property point _popupPoint
+
+    property var _qmlMenu: null
+    property var _qmlItems: []
 
     // requests data for '_indexes' and shows popup menu
     // with 'NativeMenu::actions' based on '_options'
@@ -95,7 +102,8 @@ QtObject {
             }
         }
 
-        menu.popup(_popupPoint, textStrings)
+        if (!_popupQmlMenu())
+            menu.popup(_popupPoint, textStrings)
     }
 
     function _executeAction(index) {
@@ -103,6 +111,53 @@ QtObject {
         action.action(_dataList, _options, _indexes)
     }
 
+    // design/SPEC.md 3.9 context menus
+    function _popupQmlMenu() {
+        const window = MainCtx.intfMainWindow
+        const parentItem = window?.contentItem ?? null
+        if (!parentItem)
+            return false
+
+        if (!_qmlMenu) {
+            const menuComponent = Qt.createComponent("qrc:///qt/qml/VLC/Widgets/MenuExt.qml")
+            if (menuComponent.status !== Component.Ready) {
+                console.warn("NativeMenu: unable to create the menu:", menuComponent.errorString())
+                return false
+            }
+            _qmlMenu = menuComponent.createObject(parentItem)
+            if (!_qmlMenu)
+                return false
+        }
+
+        const itemComponent = Qt.createComponent("qrc:///qt/qml/VLC/Widgets/MenuItemExt.qml")
+        if (itemComponent.status !== Component.Ready) {
+            console.warn("NativeMenu: unable to create the menu items:", itemComponent.errorString())
+            return false
+        }
+
+        for (const item of _qmlItems) {
+            _qmlMenu.removeItem(item)
+            item.destroy()
+        }
+        _qmlItems = []
+
+        for (let i = 0; i < _effectiveActions.length; ++i) {
+            const action = _effectiveActions[i]
+            const item = itemComponent.createObject(null, {
+                "text": action.text,
+                "iconText": action.icon ?? ""
+            })
+            const actionIndex = i
+            item.triggered.connect(() => root._executeAction(actionIndex))
+            _qmlMenu.addItem(item)
+            _qmlItems.push(item)
+        }
+
+        const position = parentItem.mapFromGlobal(_popupPoint.x, _popupPoint.y)
+        _qmlMenu.parent = parentItem
+        _qmlMenu.popup(position.x, position.y)
+        return true
+    }
 
     readonly property StringListMenu _menu: StringListMenu {
         id: menu
