@@ -941,6 +941,7 @@ libqt_plugin_la_RES = \
 	pixmaps/menu/volume-low.svg \
 	pixmaps/menu/volume-muted.svg \
 	pixmaps/misc/cone.svg \
+	pixmaps/misc/folder_glyph.svg \
 	pixmaps/misc/new_indicator.svg \
 	pixmaps/misc/theme_dark.svg \
 	pixmaps/misc/theme_daynight.svg \
@@ -1061,7 +1062,9 @@ libqml_module_maininterface_a_CXXFLAGS = $(libqt_plugin_la_CXXFLAGS)
 libqml_module_maininterface_a_CPPFLAGS = $(libqt_plugin_la_CPPFLAGS)
 libqml_module_maininterface_a_QML = \
 	maininterface/qml/MenuTopbar.qml \
-	maininterface/qml/LocalTopbar.qml \
+	maininterface/qml/AppTitleBar.qml \
+	maininterface/qml/MainMenu.qml \
+	maininterface/qml/MiniPlayerCard.qml \
 	maininterface/qml/MainInterface.qml \
 	maininterface/qml/MainViewLoader.qml \
 	maininterface/qml/MainDisplay.qml \
@@ -1120,6 +1123,7 @@ libqml_module_medialibrary_a_QML = \
 	medialibrary/qml/MLGlobalShortcuts.qml \
 	medialibrary/qml/Bookmarks.qml \
 	medialibrary/qml/MLContextMenu.qml \
+	medialibrary/qml/RecentMediaMenu.qml \
 	medialibrary/qml/MLDragItem.qml \
 	medialibrary/qml/MLTableColumns.qml \
 	medialibrary/qml/ScanProgressBar.qml
@@ -1310,6 +1314,7 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/ActionButtonPrimary.qml \
 	widgets/qml/BannerTabButton.qml \
 	widgets/qml/BannerCone.qml \
+	widgets/qml/FolderIcon.qml \
 	widgets/qml/MenuExt.qml \
 	widgets/qml/MenuItemExt.qml \
 	widgets/qml/MenuSeparatorExt.qml \

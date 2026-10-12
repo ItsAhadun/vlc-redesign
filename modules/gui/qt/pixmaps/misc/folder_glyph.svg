@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <!-- Placeholder folder glyph (stroke-based, recolored at runtime: #FF00FF is the
+       svgcolor COLOR1 key). TODO(icons): replace with the redesign "folder" icon. -->
+  <path d="M3.75 6.75A1.5 1.5 0 0 1 5.25 5.25h4.19l1.81 1.81h7.5a1.5 1.5 0 0 1 1.5 1.5v8.69a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="#FF00FF" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>

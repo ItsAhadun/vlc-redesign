@@ -249,6 +249,8 @@ public slots:
 
     void PLOpenDir();
     void PLAppendDir();
+    // Asks for a folder and adds it to the media library entry points
+    void addMediaLibraryFolder();
 
     void streamingDialog( QWindow *parent, const QStringList& mrls, bool b_stream = true,
                           QStringList options = QStringList("") );

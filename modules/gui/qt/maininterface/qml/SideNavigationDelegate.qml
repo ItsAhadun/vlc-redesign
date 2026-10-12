@@ -18,7 +18,6 @@
 
 import QtQuick
 import QtQuick.Templates as T
-import QtQuick.Layouts
 
 
 import VLC.MainInterface
@@ -26,6 +25,9 @@ import VLC.Widgets as Widgets
 import VLC.Style
 import VLC.Util
 
+// Navigation pane entry (design/SPEC.md 2.1): 24 px icon + 14 px label,
+// icon only when the pane is collapsed to the rail. The current entry has
+// its icon in the accent color and a brighter label.
 T.ItemDelegate {
     id: control
 
@@ -35,47 +37,30 @@ T.ItemDelegate {
 
     property bool showText: true
 
-    property real radius: VLCStyle.button_radius
+    property real radius: VLCStyle.radius_small
+
+    property string accessibleId: ""
 
     // Settings
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             implicitContentWidth + leftPadding + rightPadding)
-    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
-                             implicitContentHeight + topPadding + bottomPadding)
+    implicitHeight: VLCStyle.dp(46, VLCStyle.scale)
 
-    padding: VLCStyle.margin_xxsmall
+    leftPadding: showText ? VLCStyle.space_12 : 0
+    rightPadding: showText ? VLCStyle.space_12 : 0
+    topPadding: 0
+    bottomPadding: 0
 
-    leftInset: implicitLeftInset
-    rightInset: implicitRightInset
+    spacing: VLCStyle.space_12
 
-    topInset: implicitTopInset
-    bottomInset: implicitBottomInset
-
-    property real implicitLeftInset: VLCStyle.margin_xxsmall
-    property real implicitRightInset: VLCStyle.margin_xxsmall
-
-    property real implicitTopInset: VLCStyle.margin_xxxsmall
-    property real implicitBottomInset: VLCStyle.margin_xxxsmall
+    focusPolicy: Qt.StrongFocus
 
     // Accessible
 
     Accessible.onPressAction: control.clicked()
-    AccessibleCompat.id: {
-        if (model.depth !== 0 || !model.uri || model.uri.length === 0) return "";
-        const navBarIds = {
-            "home": "homeNavBar",
-            "video": "videoNavBar",
-            "music": "musicNavBar",
-            "network": "browseNavBar",
-            "discover": "discoverNavBar"
-        }
-        const id = navBarIds[model.uri[0]]
-        if (id !== undefined)
-            return id
-        else
-            return ""
-    }
+    Accessible.name: text
+    AccessibleCompat.id: accessibleId
 
     // Tooltip
 
@@ -87,9 +72,11 @@ T.ItemDelegate {
 
     // Childs
 
+    readonly property bool _current: control.checked || control.highlighted
+
     ColorContext {
         id: theme
-        colorSet: ColorContext.TabButton
+        colorSet: ColorContext.Window
 
         focused: control.visualFocus
         hovered: control.hovered
@@ -97,81 +84,56 @@ T.ItemDelegate {
         enabled: control.enabled
     }
 
-    background: Widgets.AnimatedBackground {
-        enabled: theme.initialized
-        color: theme.bg.primary
-        border.color: visualFocus ? theme.visualFocus : "transparent"
-
+    background: Rectangle {
         radius: control.radius
-
-        Widgets.CurrentIndicator {
-            anchors {
-                left: parent.left
-                leftMargin: VLCStyle.margin_xxxsmall
-                verticalCenter: parent.verticalCenter
-            }
-            implicitHeight: parent.height / 2
-            visible: control.checked
-
-            radius: control.radius / 2
-        }
+        color: ((control.hovered || control.down) ? theme.palette?.hoverOverlay : undefined) ?? "transparent"
+        border.width: control.visualFocus ? VLCStyle.focus_border : 0
+        border.color: theme.visualFocus
     }
 
-    contentItem: RowLayout {
-        spacing: VLCStyle.margin_xsmall
+    contentItem: Item {
+        implicitWidth: VLCStyle.icon_normal + (control.showText ? control.spacing + label.implicitWidth : 0)
+        implicitHeight: VLCStyle.icon_normal
 
-        Item {
-            Layout.preferredWidth: VLCStyle.icon_banner
-            Layout.fillHeight: true
+        Widgets.IconLabel {
+            id: iconLabel
 
-            Widgets.IconLabel {
-                id: iconLabel
+            x: control.showText ? 0 : Math.round((parent.width - width) / 2)
+            anchors.verticalCenter: parent.verticalCenter
 
-                visible: text.length > 0
+            width: VLCStyle.icon_normal
+            height: VLCStyle.icon_normal
 
-                anchors.centerIn: parent
+            text: control.iconTxt
 
-                text: control.iconTxt
+            font.pixelSize: VLCStyle.icon_normal
 
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-
-                color: (control.highlighted || control.checked) ? theme.accent : theme.fg.primary
-
-                font.pixelSize: VLCStyle.icon_banner
-            }
+            color: (control._current ? theme.palette?.accentMain
+                                     : (control.hovered ? (theme.palette?.isDark ? theme.palette?.fg1 : theme.palette?.fgA1)
+                                                        : theme.palette?.fgA2)) ?? "transparent"
         }
 
-        T.Label {
+        Text {
             id: label
 
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-            text: control.text
-
-            verticalAlignment: Text.AlignVCenter
-
-            color: control.checked ? theme.fg.secondary : theme.fg.primary
-
-            elide: Text.ElideRight
+            anchors.left: iconLabel.right
+            anchors.leftMargin: control.spacing
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
 
             visible: control.showText
 
-            font.pixelSize: VLCStyle.fontSize_normal
+            text: control.text
 
-            font.weight: control.checked ? Font.DemiBold : Font.Normal
+            elide: Text.ElideRight
+
+            font.pixelSize: VLCStyle.fontSize_body
+
+            color: ((control._current || control.hovered) ? (theme.palette?.isDark ? theme.palette?.fg1 : theme.palette?.fgA1)
+                                                          : theme.palette?.fgA2) ?? "transparent"
 
             //button text is already exposed
             Accessible.ignored: true
-
-            Behavior on color {
-                enabled: theme.initialized
-
-                ColorAnimation {
-                    duration: VLCStyle.duration_short
-                }
-            }
         }
     }
 }
