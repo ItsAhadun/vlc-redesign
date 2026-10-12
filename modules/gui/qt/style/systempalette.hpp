@@ -97,6 +97,35 @@ public: \
 private: \
     QColor name {value}
 
+/**
+ * Raw design tokens of the redesign (design/SPEC.md section 1.1), they are
+ * resolved for the current light/dark palette and accent color
+ */
+struct DesignTokens
+{
+    //foreground
+    QColor fg1, fg2, fgA1, fgA2, fgA3, fgA4, fgB1;
+    //backgrounds
+    QColor bgA1, bgA2, bgA3, bgA4, bgA5, bgB1, bgB2;
+    QColor bgA3Transparent, bgB1Transparent, bgB2Transparent;
+    //dividers
+    QColor dividerBright, dividerDim;
+    //accent, derived from the selected accent color
+    QColor accentMain, accentBright, accentDim, accentLogo;
+    QColor bgAccentBright, bgAccentDark;
+    QColor fgOnAccent;
+    //misc
+    QColor hoverOverlay;
+    QColor volumeTrack, volumeGauge;
+    QColor volumeGaugeLow, volumeGaugeMid, volumeGaugeHigh, volumeGaugePeak;
+};
+
+#define TOKEN_DEFINITION(name) \
+    Q_PROPERTY(QColor name READ get_##name NOTIFY paletteChanged FINAL) \
+public: \
+    inline QColor get_## name() const { return m_tokens.name; } \
+private:
+
 
 
 class SystemPalette : public QObject, public QQmlParserStatus
@@ -135,6 +164,45 @@ public:
 
     COLOR_DEFINITION(red500, "#FF0000");
 
+    //design tokens, see DesignTokens
+    TOKEN_DEFINITION(fg1)
+    TOKEN_DEFINITION(fg2)
+    TOKEN_DEFINITION(fgA1)
+    TOKEN_DEFINITION(fgA2)
+    TOKEN_DEFINITION(fgA3)
+    TOKEN_DEFINITION(fgA4)
+    TOKEN_DEFINITION(fgB1)
+
+    TOKEN_DEFINITION(bgA1)
+    TOKEN_DEFINITION(bgA2)
+    TOKEN_DEFINITION(bgA3)
+    TOKEN_DEFINITION(bgA4)
+    TOKEN_DEFINITION(bgA5)
+    TOKEN_DEFINITION(bgB1)
+    TOKEN_DEFINITION(bgB2)
+    TOKEN_DEFINITION(bgA3Transparent)
+    TOKEN_DEFINITION(bgB1Transparent)
+    TOKEN_DEFINITION(bgB2Transparent)
+
+    TOKEN_DEFINITION(dividerBright)
+    TOKEN_DEFINITION(dividerDim)
+
+    TOKEN_DEFINITION(accentMain)
+    TOKEN_DEFINITION(accentBright)
+    TOKEN_DEFINITION(accentDim)
+    TOKEN_DEFINITION(accentLogo)
+    TOKEN_DEFINITION(bgAccentBright)
+    TOKEN_DEFINITION(bgAccentDark)
+    TOKEN_DEFINITION(fgOnAccent)
+
+    TOKEN_DEFINITION(hoverOverlay)
+    TOKEN_DEFINITION(volumeTrack)
+    TOKEN_DEFINITION(volumeGauge)
+    TOKEN_DEFINITION(volumeGaugeLow)
+    TOKEN_DEFINITION(volumeGaugeMid)
+    TOKEN_DEFINITION(volumeGaugeHigh)
+    TOKEN_DEFINITION(volumeGaugePeak)
+
 public:
     SystemPalette(QObject* parent = nullptr);
 
@@ -172,8 +240,13 @@ private:
     void makeDarkPalette();
     void makeSystemPalette();
 
+    void makeDesignTokens(bool dark);
+    void makeTokenPalette();
+
 private:
     MainCtx* m_ctx = nullptr;
+
+    DesignTokens m_tokens;
 
     ColorSchemeModel::ColorScheme m_source = ColorSchemeModel::ColorScheme::Day;
     bool m_isDark = false;
@@ -187,5 +260,6 @@ private:
 
 #undef COLOR_PROPERTY
 #undef COLOR_DEFINITION
+#undef TOKEN_DEFINITION
 
 #endif // VLC_SYSTEMPALETTE_H

@@ -791,6 +791,10 @@ ui_%.h: %.ui
 
 libqt_plugin_la_RES = \
 	pixmaps/VLCIcons.ttf \
+	fonts/Inter-Regular.ttf \
+	fonts/Inter-Medium.ttf \
+	fonts/Inter-SemiBold.ttf \
+	fonts/Inter-Bold.ttf \
 	pixmaps/addons/addon_default.svg \
 	pixmaps/addons/addon_broken.svg \
 	pixmaps/addons/addon_blue.svg \
@@ -1539,6 +1543,7 @@ nodist_libqt_plugin_la_SOURCES += windows.cpp
 endif
 
 EXTRA_DIST += $(lib_qt_plugin_la_QRC) $(libqt_plugin_la_RES) $(libqt_plugin_la_SHADER)
+EXTRA_DIST += fonts/OFL.txt
 
 nodist_libqt_plugin_la_SOURCES += assets.cpp  shaders/shaders.cpp
 endif

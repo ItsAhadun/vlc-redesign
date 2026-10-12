@@ -59,6 +59,7 @@ extern "C" char **environ;
 #include <QQmlError>
 #include <QList>
 #include <QTranslator>
+#include <QFontDatabase>
 
 #if __has_include(<rhi/qrhi.h>) // Qt 6.6
 #define RHI_HEADER_AVAILABLE
@@ -795,6 +796,39 @@ static inline void registerMetaTypes()
     qRegisterMetaType<VLCDialog::QuestionType>();
 }
 
+/* Register the bundled Inter font (fonts/, SIL OFL 1.1) and use it as the
+ * default interface font */
+static void loadApplicationFonts( qt_intf_t *p_intf, QApplication &app )
+{
+    static const char *const fontFiles[] = {
+        ":/fonts/Inter-Regular.ttf",
+        ":/fonts/Inter-Medium.ttf",
+        ":/fonts/Inter-SemiBold.ttf",
+        ":/fonts/Inter-Bold.ttf",
+    };
+
+    bool loaded = false;
+    for( const char *fontFile : fontFiles )
+    {
+        const int id = QFontDatabase::addApplicationFont( QString::fromLatin1( fontFile ) );
+        if( id < 0 )
+        {
+            msg_Warn( p_intf, "unable to load font %s", fontFile );
+            continue;
+        }
+        msg_Dbg( p_intf, "loaded font %s (%s)", fontFile,
+                 qtu( QFontDatabase::applicationFontFamilies( id ).join( ", " ) ) );
+        loaded = true;
+    }
+
+    if( !loaded )
+        return;
+
+    QFont font = app.font();
+    font.setFamilies( { QStringLiteral( "Inter" ) } );
+    app.setFont( font );
+}
+
 static void *Thread( void *obj )
 {
     qt_intf_t *p_intf = (qt_intf_t *)obj;
@@ -956,6 +990,8 @@ static void *Thread( void *obj )
     /* Set application direction to locale direction,
      * necessary for  RTL locales */
     app.setLayoutDirection(QLocale().textDirection());
+
+    loadApplicationFonts(p_intf, app);
 
     /* All the settings are in the .conf/.ini style */
 #ifdef _WIN32

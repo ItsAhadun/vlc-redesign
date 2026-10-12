@@ -161,6 +161,12 @@ MainCtx::MainCtx(qt_intf_t *_p_intf)
     settings = getSettings();
     m_colorScheme = new ColorSchemeModel(this);
 
+    {
+        char* accentColor = var_InheritString(p_intf, "qt-accent-color");
+        updateAccentColor(qfu(accentColor));
+        free(accentColor);
+    }
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
     connect(m_colorScheme, &ColorSchemeModel::currentChanged, qGuiApp, [colorScheme = m_colorScheme]() {
         QStyleHints *const styleHints = qGuiApp->styleHints();
@@ -623,6 +629,68 @@ void MainCtx::setPinVideoControls(bool pinVideoControls)
 
     m_pinVideoControls = pinVideoControls;
     emit pinVideoControlsChanged();
+}
+
+QList<QColor> MainCtx::accentPresets()
+{
+    // accent colors of the redesign, see design/SPEC.md section 1.2,
+    // the first one is the default
+    static const QList<QColor> presets {
+        QColor(0xd3, 0x79, 0x18), // orange
+        QColor(0xa1, 0x3b, 0x26), // red
+        QColor(0x8c, 0x72, 0x1b), // mustard
+        QColor(0x14, 0x75, 0x28), // green
+        QColor(0x14, 0x7a, 0x97), // teal
+        QColor(0x14, 0x44, 0x97), // blue
+        QColor(0x66, 0x31, 0xb5), // purple
+        QColor(0xab, 0x3c, 0x80), // magenta
+        QColor(0x7e, 0x7e, 0x7e), // grey
+    };
+    return presets;
+}
+
+int MainCtx::accentIndex() const
+{
+    return accentPresets().indexOf(m_accentColor);
+}
+
+void MainCtx::setAccentIndex(int index)
+{
+    const QList<QColor> presets = accentPresets();
+    if (index < 0 || index >= presets.size())
+        return;
+    // the first preset is stored as "default"
+    setAccentColor(index == 0 ? QStringLiteral("default") : presets[index].name(QColor::HexRgb));
+}
+
+void MainCtx::setAccentColor(const QString& value)
+{
+    const QByteArray stored = value.isEmpty() ? QByteArrayLiteral("default") : value.toUtf8();
+    config_PutPsz("qt-accent-color", stored.constData());
+    updateAccentColor(QString::fromUtf8(stored));
+}
+
+void MainCtx::updateAccentColor(const QString& value)
+{
+    QColor color;
+    if (value == QLatin1String("system"))
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        color = qApp->palette().color(QPalette::Normal, QPalette::Accent);
+#endif
+    }
+    else if (value != QLatin1String("default"))
+    {
+        color = QColor(value);
+    }
+
+    if (!color.isValid())
+        color = accentPresets().front();
+
+    if (color == m_accentColor)
+        return;
+    m_accentColor = color;
+    emit accentColorChanged();
 }
 
 void MainCtx::setPinOpacity(float pinOpacity)

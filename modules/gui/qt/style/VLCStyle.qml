@@ -331,6 +331,121 @@ QtObject {
     readonly property real scrollBarInteractingSize: MainCtx.dp(8, scale)
     readonly property real scrollBarNonInteractingSize: MainCtx.dp(2, scale)
 
+    // ------------------------------------------------------------------------
+    // Redesign tokens (design/SPEC.md section 1). Colors are on the palette
+    // (theme.palette.bgA3, VLCStyle.palette.accentMain, ...), the accent is
+    // selected with MainCtx.accentIndex / MainCtx.setAccentColor()
+
+    // Typography: Inter (bundled, the application default font)
+    readonly property string fontFamily: Qt.application.font.family
+
+    readonly property int fontWeight_regular: Font.Normal
+    readonly property int fontWeight_medium: Font.Medium
+    readonly property int fontWeight_semiBold: Font.DemiBold
+    readonly property int fontWeight_bold: Font.Bold
+    readonly property int fontWeight_heading: fontWeight_medium
+
+    // type scale, line heights are meant for `lineHeightMode: Text.FixedHeight`
+    readonly property int fontSize_caption: MainCtx.dp(12, scale)   // toggle labels
+    readonly property int fontSize_body: MainCtx.dp(14, scale)      // default UI text
+    readonly property int fontSize_title: MainCtx.dp(16, scale)     // section headers, window titles
+    readonly property int fontSize_headline: MainCtx.dp(24, scale)  // music track line, onboarding titles
+    readonly property int fontSize_display: MainCtx.dp(32, scale)   // onboarding welcome
+
+    readonly property int lineHeight_caption: MainCtx.dp(15, scale)
+    readonly property int lineHeight_body: MainCtx.dp(17, scale)
+    readonly property int lineHeight_bodyRelaxed: MainCtx.dp(25, scale)     // dialog helper text, tables
+    readonly property int lineHeight_title: MainCtx.dp(19, scale)
+    readonly property int lineHeight_titleRelaxed: MainCtx.dp(28, scale)    // dialog section titles, body copy
+    readonly property int lineHeight_headline: MainCtx.dp(29, scale)
+    readonly property int lineHeight_headlineRelaxed: MainCtx.dp(42, scale) // onboarding step titles
+    readonly property int lineHeight_display: MainCtx.dp(39, scale)
+
+    // Spacing scale
+    readonly property int space_2: MainCtx.dp(2, scale)
+    readonly property int space_4: MainCtx.dp(4, scale)
+    readonly property int space_6: MainCtx.dp(6, scale)
+    readonly property int space_8: MainCtx.dp(8, scale)
+    readonly property int space_10: MainCtx.dp(10, scale)
+    readonly property int space_12: MainCtx.dp(12, scale)
+    readonly property int space_14: MainCtx.dp(14, scale)
+    readonly property int space_16: MainCtx.dp(16, scale)
+    readonly property int space_20: MainCtx.dp(20, scale)
+    readonly property int space_24: MainCtx.dp(24, scale)
+    readonly property int space_28: MainCtx.dp(28, scale)
+
+    // Corner radii
+    readonly property real radius_xxsmall: MainCtx.dp(2, scale) // volume fill, small inputs
+    readonly property real radius_xsmall: MainCtx.dp(3, scale)  // toggle wells and knob
+    readonly property real radius_small: MainCtx.dp(4, scale)   // buttons, segment cells, icon button hover
+    readonly property real radius_medium: MainCtx.dp(6, scale)  // toggle/segmented tracks, play pill
+    readonly property real radius_large: MainCtx.dp(8, scale)   // cards, nav pane, miniplayer
+    readonly property real radius_xlarge: MainCtx.dp(12, scale) // windows, dialogs, large artwork
+
+    // Window layout
+    readonly property int windowPadding: MainCtx.dp(8, scale)
+    readonly property int titleBar_height: MainCtx.dp(40, scale)
+    readonly property int controlBar_height: MainCtx.dp(54, scale)
+    readonly property int navPane_width: MainCtx.dp(200, scale)
+    readonly property int navRail_width: MainCtx.dp(50, scale)
+    readonly property int navItem_height: MainCtx.dp(24, scale)
+    readonly property int playerSidePanel_width: MainCtx.dp(427, scale) // rail + panel
+    readonly property int playerSidePanelContent_width: MainCtx.dp(377, scale)
+    readonly property int libraryContent_leftMargin: MainCtx.dp(28, scale)
+
+    // Controls
+    readonly property int iconButton_size: MainCtx.dp(28, scale)       // title bar icon buttons
+    readonly property int iconWrapper_width: MainCtx.dp(30, scale)     // icon button hit area
+    readonly property int iconWrapper_height: MainCtx.dp(32, scale)
+    readonly property int icon_info: MainCtx.dp(18, scale)
+    readonly property int windowButton_width: MainCtx.dp(36, scale)
+    readonly property int windowButton_height: MainCtx.dp(24, scale)
+    readonly property int playButton_width: MainCtx.dp(54, scale)
+    readonly property int playButton_height: MainCtx.dp(28, scale)
+    readonly property int timeLabel_width: MainCtx.dp(76, scale)
+    readonly property int seekBar_height: MainCtx.dp(28, scale)
+    readonly property int seekHandle_width: MainCtx.dp(6, scale)
+    readonly property int volumeWidget_width: MainCtx.dp(88, scale)
+    readonly property int volumeWidget_height: MainCtx.dp(28, scale)
+    readonly property int toggle_width: MainCtx.dp(68, scale)
+    readonly property int toggle_height: MainCtx.dp(32, scale)
+    readonly property int dropdown_height: MainCtx.dp(36, scale)
+    readonly property int searchField_height: MainCtx.dp(32, scale)
+    readonly property int dialogButton_width: MainCtx.dp(100, scale)
+    readonly property int dialogButton_height: MainCtx.dp(32, scale)
+    readonly property int menuRow_height: MainCtx.dp(48, scale)
+    readonly property int listRow_height: MainCtx.dp(32, scale)
+    readonly property int settingsRow_controlWidth: MainCtx.dp(320, scale)
+    readonly property int settingsCategory_width: MainCtx.dp(188, scale)
+    readonly property int settingsCategory_height: MainCtx.dp(40, scale)
+
+    // Cards
+    readonly property int videoCard_width: MainCtx.dp(316, scale)
+    readonly property int videoCard_height: MainCtx.dp(178, scale)
+    readonly property int musicCard_size: MainCtx.dp(200, scale)
+    readonly property int card_spacing: MainCtx.dp(20, scale)
+    readonly property int watchedProgress_height: MainCtx.dp(3, scale)
+    readonly property int miniPlayer_width: MainCtx.dp(391, scale)
+    readonly property int miniPlayer_height: MainCtx.dp(339, scale)
+    readonly property int miniPlayer_margin: MainCtx.dp(8, scale)
+    readonly property int seekPreview_width: MainCtx.dp(272, scale)
+    readonly property int seekPreview_height: MainCtx.dp(189, scale)
+
+    // Windows
+    readonly property int settingsWindow_width: MainCtx.dp(1048, scale)
+    readonly property int settingsWindow_height: MainCtx.dp(865, scale)
+    readonly property int settingsHeader_height: MainCtx.dp(50, scale)
+    readonly property int settingsSidebar_width: MainCtx.dp(216, scale)
+    readonly property int dialogFooter_height: MainCtx.dp(72, scale)
+    readonly property int onboardingWindow_width: MainCtx.dp(1090, scale)
+    readonly property int onboardingWindow_height: MainCtx.dp(759, scale)
+
+    // Effects ("bg blur + shadow" style)
+    readonly property real backdropBlur_radius: MainCtx.dp(50, scale)
+    readonly property real popupShadow_blurRadius: MainCtx.dp(15, scale)
+    readonly property real popupShadow_yOffset: MainCtx.dp(8, scale)
+    readonly property color popupShadow_color: Qt.rgba(0, 0, 0, 0.46)
+
     function dp(size: real, scale: real) : real {
         if (!scale)
             return MainCtx.dp(size, MainCtx.intfScaleFactor)

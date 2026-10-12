@@ -30,6 +30,7 @@
 #include <QApplication>
 #include <QQuickItem>
 #include <QTimer>
+#include <QColor>
 
 Q_MOC_INCLUDE( "dialogs/toolbar/controlbar_profile_model.hpp" )
 Q_MOC_INCLUDE( "util/csdbuttonmodel.hpp" )
@@ -113,6 +114,10 @@ class MainCtx : public QObject
     Q_PROPERTY(bool hasGridListMode MEMBER m_hasGridListMode NOTIFY hasGridListModeChanged FINAL)
     Q_PROPERTY(Grouping grouping READ grouping WRITE setGrouping NOTIFY groupingChanged FINAL)
     Q_PROPERTY(ColorSchemeModel* colorScheme READ getColorScheme CONSTANT FINAL)
+    // accent color of the interface, stored in "qt-accent-color"
+    Q_PROPERTY(QColor accentColor READ accentColor NOTIFY accentColorChanged FINAL)
+    Q_PROPERTY(int accentIndex READ accentIndex WRITE setAccentIndex NOTIFY accentColorChanged FINAL)
+    Q_PROPERTY(QList<QColor> accentPresets READ accentPresets CONSTANT FINAL)
     Q_PROPERTY(bool hasVLM READ hasVLM CONSTANT FINAL)
     Q_PROPERTY(bool clientSideDecoration READ useClientSideDecoration NOTIFY useClientSideDecorationChanged FINAL)
     Q_PROPERTY(bool hasFirstrun READ hasFirstrun CONSTANT FINAL)
@@ -240,6 +245,9 @@ public:
     inline bool albumSections() const { return m_albumSections; }
     inline bool lyricsMode() const { return m_lyricsMode; }
     inline ColorSchemeModel* getColorScheme() const { return m_colorScheme; }
+    inline QColor accentColor() const { return m_accentColor; }
+    int accentIndex() const;
+    static QList<QColor> accentPresets();
     bool hasVLM() const;
     bool useClientSideDecoration() const;
     bool hasFirstrun() const;
@@ -451,6 +459,7 @@ protected:
     bool                 m_hasGridListMode = false;
     Grouping             m_grouping = GROUPING_NONE;
     ColorSchemeModel*    m_colorScheme = nullptr;
+    QColor               m_accentColor;
     bool                 m_windowTitlebar = true;
     // NOTE: Ideally this should be a QVLCBool.
     bool                 m_hasToolbarMenu = false;
@@ -529,6 +538,13 @@ public slots:
     void setPinVideoControls( bool );
     void setPinOpacity( float );
 
+    /**
+     * set the accent color, @p value is "default", "system", or a "#rrggbb" color,
+     * the value is saved in the "qt-accent-color" option
+     */
+    void setAccentColor( const QString& value );
+    void setAccentIndex( int index );
+
     void setbgCone(bool);
     void updateIntfScaleFactor();
     void onWindowVisibilityChanged(QWindow::Visibility);
@@ -590,6 +606,8 @@ signals:
     void pinVideoControlsChanged();
     void pinOpacityChanged();
 
+    void accentColorChanged();
+
     void hasAcrylicSurfaceChanged(bool);
 
     void acrylicActiveChanged();
@@ -621,6 +639,7 @@ signals:
 private:
     void loadPrefs(bool callSignals);
     void loadFromSettingsImpl(bool callSignals);
+    void updateAccentColor(const QString& value);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MainCtx::MainInterfaceModes)

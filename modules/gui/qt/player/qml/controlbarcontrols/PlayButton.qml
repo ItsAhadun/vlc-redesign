@@ -261,8 +261,8 @@ T.Control {
             radius: width / 2
 
             gradient: Gradient {
-                GradientStop { position: 0.0; color: "#e25b01" }
-                GradientStop { position: 1.0; color: "#f89a06" }
+                GradientStop { position: 0.0; color: theme.palette.accentDim }
+                GradientStop { position: 1.0; color: theme.palette.accentBright }
             }
 
             Widgets.RoundedRectangleShadow {

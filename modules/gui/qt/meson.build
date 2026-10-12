@@ -572,6 +572,8 @@ if have_wayland and cpp.has_header('qpa/qplatformnativeinterface.h', dependencie
     )
 endif
 
+# resources (pixmaps, fonts/Inter-*.ttf, ...) are listed in assets.qrc,
+# rcc dependencies are tracked from it
 qrc_files = files('assets.qrc')
 if host_system == 'windows'
   qrc_files += files('windows.qrc')
