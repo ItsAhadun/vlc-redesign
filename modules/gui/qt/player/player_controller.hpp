@@ -240,6 +240,8 @@ public slots:
 
     void jumpFwd();
     void jumpBwd();
+    // relative jump by a number of seconds (negative = backward)
+    void jumpSeconds( int seconds );
     void jumpTime( VLCTime i_time );
     void jumpToPos( double );
     void frameNext();

@@ -118,7 +118,11 @@ public:
     Q_PROPERTY(bool podcastDialogVisible READ podcastDialogVisible NOTIFY podcastDialogVisibleChanged FINAL)
     Q_PROPERTY(bool pluginDialogVisible READ pluginDialogVisible NOTIFY pluginDialogVisibleChanged FINAL)
     Q_PROPERTY(bool egpDialogVisible READ egpDialogVisible NOTIFY egpDialogVisibleChanged FINAL)
+    // true when the settings window (QML) or the classic preferences are shown
     Q_PROPERTY(bool prefsDialogVisible READ prefsDialogVisible NOTIFY prefsDialogVisibleChanged FINAL)
+    // the QML settings window (dialogs/settings/qml/SettingsWindow.qml)
+    Q_PROPERTY(bool settingsWindowVisible READ settingsWindowVisible WRITE setSettingsWindowVisible NOTIFY settingsWindowVisibleChanged FINAL)
+    Q_PROPERTY(bool classicPrefsDialogVisible READ classicPrefsDialogVisible NOTIFY classicPrefsDialogVisibleChanged FINAL)
 #ifdef UPDATE_CHECK
     Q_PROPERTY(bool updateDialogVisible READ updateDialogVisible NOTIFY updateDialogVisibleChanged FINAL)
 #endif
@@ -171,6 +175,7 @@ private:
     std::unique_ptr<QMenu> miscPopupMenu;
 
     QPointer<PrefsDialog> m_prefsDialog;
+    bool m_settingsWindowVisible = false;
 
     std::unique_ptr<OpenDialog> m_openDialog;
     std::unique_ptr<FirstRunWizard> m_firstRunDialog;
@@ -215,7 +220,11 @@ public slots:
                                               const QMessageBox::StandardButtons buttons = QMessageBox::NoButton,
                                               const QMessageBox::StandardButton defaultButton = QMessageBox::NoButton,
                                               const QMessageBox::Icon icon = QMessageBox::NoIcon);
+    // opens/closes the settings window (classic preferences in dialogs provider mode)
     void prefsDialog();
+    // the classic Qt Widgets preferences, @p simplePanel: SPrefs* panel to show (-1: keep)
+    void classicPrefsDialog(int simplePanel = -1);
+    void setSettingsWindowVisible(bool visible);
     void firstRunDialog();
     void extendedDialog();
     void synchroDialog();
@@ -283,6 +292,8 @@ public:
     bool pluginDialogVisible() const;
     bool egpDialogVisible() const;
     bool prefsDialogVisible() const;
+    bool settingsWindowVisible() const { return m_settingsWindowVisible; }
+    bool classicPrefsDialogVisible() const;
 #ifdef UPDATE_CHECK
     bool updateDialogVisible() const;
 #endif
@@ -306,6 +317,8 @@ signals:
     void pluginDialogVisibleChanged();
     void egpDialogVisibleChanged();
     void prefsDialogVisibleChanged();
+    void settingsWindowVisibleChanged();
+    void classicPrefsDialogVisibleChanged();
 #ifdef UPDATE_CHECK
     void updateDialogVisibleChanged();
 #endif

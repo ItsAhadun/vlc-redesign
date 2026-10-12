@@ -176,7 +176,10 @@ InterfaceWindowHandler::~InterfaceWindowHandler()
 {
     m_window->removeEventFilter(this);
     /* Save this size */
-    QVLCTools::saveWindowPosition(getSettings(), m_window);
+    if (var_InheritBool(p_intf, "qt-remember-geometry"))
+        QVLCTools::saveWindowPosition(getSettings(), m_window);
+    else
+        getSettings()->remove("geometry");
     assert(qApp);
     if (!qApp->property("isDying").toBool())
     {

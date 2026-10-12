@@ -118,6 +118,15 @@ class MainCtx : public QObject
     Q_PROPERTY(QColor accentColor READ accentColor NOTIFY accentColorChanged FINAL)
     Q_PROPERTY(int accentIndex READ accentIndex WRITE setAccentIndex NOTIFY accentColorChanged FINAL)
     Q_PROPERTY(QList<QColor> accentPresets READ accentPresets CONSTANT FINAL)
+    // redesign player page hooks (player/qml/Player.qml), usable by the title bar
+    // and menus: docked library side panel, "Hide UI" (Ctrl+Backslash), whether the
+    // player chrome (title bar + control bar) is currently shown (auto-hide),
+    // and the in-place "Customize Player" mode
+    Q_PROPERTY(bool playerSidePanelVisible MEMBER m_playerSidePanelVisible NOTIFY playerSidePanelVisibleChanged FINAL)
+    Q_PROPERTY(QString playerSidePanelPage MEMBER m_playerSidePanelPage NOTIFY playerSidePanelPageChanged FINAL)
+    Q_PROPERTY(bool playerHideUI MEMBER m_playerHideUI NOTIFY playerHideUIChanged FINAL)
+    Q_PROPERTY(bool playerChromeVisible MEMBER m_playerChromeVisible NOTIFY playerChromeVisibleChanged FINAL)
+    Q_PROPERTY(bool playerCustomizeMode MEMBER m_playerCustomizeMode NOTIFY playerCustomizeModeChanged FINAL)
     Q_PROPERTY(bool hasVLM READ hasVLM CONSTANT FINAL)
     Q_PROPERTY(bool clientSideDecoration READ useClientSideDecoration NOTIFY useClientSideDecorationChanged FINAL)
     Q_PROPERTY(bool hasFirstrun READ hasFirstrun CONSTANT FINAL)
@@ -461,6 +470,11 @@ protected:
     ColorSchemeModel*    m_colorScheme = nullptr;
     QColor               m_accentColor;
     bool                 m_windowTitlebar = true;
+    bool                 m_playerSidePanelVisible = false;
+    QString              m_playerSidePanelPage = QStringLiteral("playlists");
+    bool                 m_playerHideUI = false;
+    bool                 m_playerChromeVisible = true;
+    bool                 m_playerCustomizeMode = false;
     // NOTE: Ideally this should be a QVLCBool.
     bool                 m_hasToolbarMenu = false;
     bool                 m_canShowVideoPIP = false;
@@ -570,6 +584,11 @@ protected slots:
     void onVOutChanged( bool );
 
 signals:
+    void playerSidePanelVisibleChanged();
+    void playerSidePanelPageChanged();
+    void playerHideUIChanged();
+    void playerChromeVisibleChanged();
+    void playerCustomizeModeChanged();
     void fullscreenInterfaceToggled( bool );
     void setInterfaceVisibible(bool, bool requestActivate = false);
     void setInterfaceFullScreen( bool );

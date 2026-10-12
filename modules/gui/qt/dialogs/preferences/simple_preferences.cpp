@@ -1671,3 +1671,68 @@ void SPrefsPanel::MLBanFolder( ) {
     if(! newEntryPoint.isEmpty() )
         mlBannedFoldersEditor->add( newEntryPoint );
 }
+
+/* Interface language helpers (also used by the QML settings window) */
+QVector<SPrefsPanel::Language> SPrefsPanel::languages()
+{
+    QVector<Language> list;
+    for( size_t i = 0; i < ARRAY_SIZE( language_map ); i++ )
+    {
+        const char *name = language_map[i].name;
+        list.append( { qfu( language_map[i].iso ),
+                       i == 0 ? qtr( name ) : qfu( name ) } );
+    }
+    return list;
+}
+
+bool SPrefsPanel::languageIsEditable()
+{
+#ifdef _WIN32
+    return true;
+#else
+    return false;
+#endif
+}
+
+QString SPrefsPanel::currentLanguage()
+{
+    QString iso = QStringLiteral( "auto" );
+#ifdef _WIN32
+    HKEY h_key;
+    if( RegOpenKeyEx( HKEY_CURRENT_USER, TEXT("Software\\VideoLAN\\VLC\\"), 0, KEY_READ, &h_key )
+            == ERROR_SUCCESS )
+    {
+        WCHAR szData[256];
+        DWORD len = 256;
+        if( RegQueryValueEx( h_key, TEXT("Lang"), NULL, NULL, (LPBYTE) &szData, &len ) == ERROR_SUCCESS )
+        {
+            char *langReg = FromWide( szData );
+            if( langReg )
+                iso = qfu( langReg );
+            free( langReg );
+        }
+        RegCloseKey( h_key );
+    }
+#endif
+    return iso;
+}
+
+void SPrefsPanel::setCurrentLanguage( const QString& iso )
+{
+#ifdef _WIN32
+    if( iso.isEmpty() || iso.startsWith( QLatin1String( "auto" ) ) )
+    {
+        QVLCRegistry qvReg( HKEY_CURRENT_USER );
+        qvReg.DeleteValue( "Software\\VideoLAN\\VLC\\", "Lang" );
+        qvReg.DeleteKey( "Software\\VideoLAN\\", "VLC" );
+        qvReg.DeleteKey( "Software\\", "VideoLAN" );
+    }
+    else
+    {
+        QVLCRegistry qvReg( HKEY_CURRENT_USER );
+        qvReg.WriteRegistry( "Software\\VideoLAN\\VLC\\", "Lang", qtu( iso ) );
+    }
+#else
+    Q_UNUSED( iso );
+#endif
+}

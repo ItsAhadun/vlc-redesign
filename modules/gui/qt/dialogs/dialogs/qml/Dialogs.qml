@@ -34,6 +34,11 @@ Item {
 
     property Item bgContent: null
 
+    // when set, "Customize Player" (showToolbarEditorDialog) calls this
+    // function instead of opening the toolbar editor window (the player page
+    // provides its in-place customize mode)
+    property var toolbarEditorHandler: null
+
     //---------------------------------------------------------------------------------------------
     // Signal
     //---------------------------------------------------------------------------------------------
@@ -594,6 +599,23 @@ Item {
         onAboutToHide: restoreFocus()
     }
 
+    // Settings window (dialogs/settings/qml), see DialogsProvider::prefsDialog()
+    Loader {
+        id: settingsWindowLoader
+
+        // last page shown, kept while VLC runs
+        property string pageId: "general"
+
+        active: DialogsProvider.settingsWindowVisible
+        source: "qrc:///qt/qml/VLC/Dialogs/SettingsWindow.qml"
+        onLoaded: item.pageId = pageId
+
+        Connections {
+            target: settingsWindowLoader.item
+            function onPageIdChanged() { settingsWindowLoader.pageId = settingsWindowLoader.item.pageId }
+        }
+    }
+
     Loader {
         id: toolbarEditorDialogLoader
         active: false
@@ -603,6 +625,10 @@ Item {
             target: DialogsProvider
 
             function onShowToolbarEditorDialog() {
+                if (typeof root.toolbarEditorHandler === "function") {
+                    root.toolbarEditorHandler()
+                    return
+                }
                 toolbarEditorDialogLoader.active = true
                 toolbarEditorDialogLoader.item.open()
             }

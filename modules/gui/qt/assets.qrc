@@ -138,4 +138,19 @@
         <file alias="addon_red.svg">pixmaps/addons/addon_red.svg</file>
         <file alias="addon_yellow.svg">pixmaps/addons/addon_yellow.svg</file>
     </qresource>
+    <qresource prefix="/settings">
+        <file alias="general.svg">pixmaps/settings/general.svg</file>
+        <file alias="interface.svg">pixmaps/settings/interface.svg</file>
+        <file alias="privacy.svg">pixmaps/settings/privacy.svg</file>
+        <file alias="controls.svg">pixmaps/settings/controls.svg</file>
+        <file alias="playback.svg">pixmaps/settings/playback.svg</file>
+        <file alias="video.svg">pixmaps/settings/video.svg</file>
+        <file alias="audio.svg">pixmaps/settings/audio.svg</file>
+        <file alias="subtitles.svg">pixmaps/settings/subtitles.svg</file>
+        <file alias="library.svg">pixmaps/settings/library.svg</file>
+        <file alias="network.svg">pixmaps/settings/network.svg</file>
+        <file alias="performance.svg">pixmaps/settings/performance.svg</file>
+        <file alias="recording.svg">pixmaps/settings/recording.svg</file>
+        <file alias="extensions.svg">pixmaps/settings/extensions.svg</file>
+    </qresource>
 </RCC>

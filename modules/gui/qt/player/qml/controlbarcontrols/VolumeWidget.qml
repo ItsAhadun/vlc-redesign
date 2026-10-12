@@ -18,6 +18,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Templates as T
+import QtQuick.Shapes
 
 import VLC.MainInterface
 import VLC.Widgets as Widgets
@@ -55,10 +56,14 @@ T.Pane {
         id: volumeWidget
 
         anchors.fill: parent
-        spacing: 0
+        spacing: VLCStyle.space_6
 
         Widgets.IconToolButton{
             id: volumeBtn
+
+            // "Icon Wrapper" hit area (30x32)
+            horizontalPadding: (VLCStyle.iconWrapper_width - VLCStyle.icon_normal) / 2
+            verticalPadding: (VLCStyle.iconWrapper_height - VLCStyle.icon_normal) / 2
 
             focus: true
             paintOnly: root.paintOnly
@@ -97,8 +102,94 @@ T.Pane {
         Widgets.SliderExt {
             id: volControl
 
-            // FIXME: use VLCStyle
-            implicitWidth: VLCStyle.dp(100, VLCStyle.scale)
+            // redesign "volume" component (design/SPEC.md 3.5): a wedge that
+            // grows to the right, filled with the fixed green-yellow-red gauge
+            implicitWidth: VLCStyle.volumeWidget_width
+            implicitHeight: VLCStyle.volumeWidget_height
+
+            leftPadding: 0
+            rightPadding: 0
+            topPadding: 0
+            bottomPadding: 0
+
+            // height of the wedge at its left end
+            readonly property real wedgeStartHeight: VLCStyle.dp(12, VLCStyle.scale)
+
+            function wedgeHalfHeightAt(x: real) : real {
+                const h = background.height
+                return (wedgeStartHeight + (h - wedgeStartHeight) * (x / Math.max(1, background.width))) / 2
+            }
+
+            handle: Item {
+                // no visible knob in the design, keep an item for positioning
+                x: volControl.visualPosition * (volControl.availableWidth - width)
+                y: 0
+                implicitWidth: 0
+                implicitHeight: volControl.availableHeight
+            }
+
+            background: Item {
+                id: wedge
+
+                implicitWidth: VLCStyle.volumeWidget_width
+                implicitHeight: VLCStyle.volumeWidget_height
+
+                width: volControl.availableWidth
+                height: volControl.availableHeight
+
+                readonly property real fillWidth: Math.max(0, Math.min(1, volControl.visualPosition)) * width
+                readonly property real midY: height / 2
+
+                // keep the edges smooth
+                layer.enabled: true
+                layer.samples: 4
+                layer.smooth: true
+
+                Shape {
+                    anchors.fill: parent
+
+                    ShapePath {
+                        strokeWidth: -1
+                        fillColor: volControl.colorContext.palette.isDark ? volControl.colorContext.palette.bgB2
+                                                                          : volControl.colorContext.palette.bgA5
+
+                        startX: 0; startY: wedge.midY - volControl.wedgeStartHeight / 2
+                        PathLine { x: wedge.width; y: 0 }
+                        PathLine { x: wedge.width; y: wedge.height }
+                        PathLine { x: 0; y: wedge.midY + volControl.wedgeStartHeight / 2 }
+                        PathLine { x: 0; y: wedge.midY - volControl.wedgeStartHeight / 2 }
+                    }
+
+                    ShapePath {
+                        id: fillPath
+
+                        strokeWidth: -1
+
+                        fillGradient: LinearGradient {
+                            x1: 0; y1: 0
+                            x2: wedge.width; y2: 0
+                            GradientStop { position: 0.00; color: Qt.darker(volControl.colorContext.palette.volumeGaugeLow, 1.25) }
+                            GradientStop { position: 0.58; color: Qt.darker(volControl.colorContext.palette.volumeGaugeMid, 1.25) }
+                            GradientStop { position: 0.79; color: Qt.darker(volControl.colorContext.palette.volumeGaugeHigh, 1.25) }
+                            GradientStop { position: 1.00; color: Qt.darker(volControl.colorContext.palette.volumeGaugePeak, 1.25) }
+                        }
+
+                        readonly property real inset: VLCStyle.dp(2, VLCStyle.scale)
+                        readonly property real right: Math.max(inset, wedge.fillWidth)
+                        readonly property real h0: Math.max(0, volControl.wedgeHalfHeightAt(inset) - inset)
+                        readonly property real h1: Math.max(0, volControl.wedgeHalfHeightAt(right) - inset)
+
+                        startX: fillPath.inset; startY: wedge.midY - fillPath.h0
+                        PathLine { x: fillPath.right; y: wedge.midY - fillPath.h1 }
+                        PathLine { x: fillPath.right; y: wedge.midY + fillPath.h1 }
+                        PathLine { x: fillPath.inset; y: wedge.midY + fillPath.h0 }
+                        PathLine { x: fillPath.inset; y: wedge.midY - fillPath.h0 }
+                    }
+                }
+
+                visible: true
+                opacity: _player.muted ? 0.5 : 1
+            }
 
             // WARNING: Directly setting the insets break handle and background positioning.
             Binding on topInset {
@@ -110,8 +201,7 @@ T.Pane {
                 value: VLCStyle.touchHandlerMargin
             }
 
-            Layout.fillHeight: true
-            Layout.margins: VLCStyle.margin_xsmall
+            Layout.alignment: Qt.AlignVCenter
 
             property bool _inhibitPlayerVolumeUpdate: false
 
@@ -129,7 +219,6 @@ T.Pane {
 
             from: 0
             to: root._maxvolpos
-            opacity: _player.muted ? 0.5 : 1
 
             enabled: !root.paintOnly // disables event handling depending on this
 
@@ -242,14 +331,15 @@ T.Pane {
 
                 x : parent.width * root._fullvolpos
                 width: VLCStyle.dp(1, VLCStyle.scale)
-                height: parent.height
                 radius: VLCStyle.dp(2, VLCStyle.scale)
 
                 // NOTE: This shouldn't be visible when the volume stops before a 100.
                 visible: (root._maxvol > 100)
 
-                // FIXME: tick mark is not visible when it's over slider
-                color: root.sliderColor
+                y: volControl.background.height / 2 - volControl.wedgeHalfHeightAt(x)
+                height: volControl.wedgeHalfHeightAt(x) * 2
+                // helper to pick 100%, not drawn in the redesign
+                color: "transparent"
 
                 // NOTE: This is a helper to select the default volume when clicking on the
                 //       tickmark. We apply a higher clamp value to achieve that behavior on

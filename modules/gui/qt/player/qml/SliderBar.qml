@@ -71,7 +71,7 @@ T.ProgressBar {
         onTriggered: control._isSeekPointsShown = false
     }
 
-    Widgets.PointingToolTipAttached.visible: (hoverHandler.hovered || control.visualFocus || dragHandler.active)
+    Widgets.PointingToolTipAttached.visible: !control.previewEnabled && (hoverHandler.hovered || control.visualFocus || dragHandler.active)
 
     Widgets.PointingToolTipAttached.text: {
         if (!Widgets.PointingToolTipAttached.instance?.visible)
@@ -314,6 +314,19 @@ T.ProgressBar {
         }
     }
 
+    // redesign seek bar (design/SPEC.md 1.3 "Seek bar"): track BG/B2, played
+    // part BG/Accent Bright, Accent/Main handle (seekHandle_width x bar height)
+    readonly property real _radius: Math.min(VLCStyle.radius_small, control.barHeight / 2)
+    readonly property color _trackColor: theme.palette.bgB2
+    readonly property color _playedColor: theme.palette.bgAccentBright
+    readonly property color _handleColor: theme.palette.accentMain
+    readonly property real _chapterGap: VLCStyle.dp(2, VLCStyle.scale)
+
+    // whether to show the redesign hover card (time + thumbnail) instead of the tooltip
+    property bool previewEnabled: true
+    // the card shows a frame of the video when possible
+    property bool thumbnailEnabled: Player.hasVideoOutput
+
     background: Item {
         width: control.availableWidth
         implicitHeight: control.implicitHeight
@@ -322,9 +335,9 @@ T.ProgressBar {
         Rectangle {
             id: sliderRect
             visible: !Player.hasChapters
-            color: control.backgroundColor
+            color: control._trackColor
             anchors.fill: parent
-            radius: implicitHeight
+            radius: control._radius
         }
 
         Repeater {
@@ -336,94 +349,46 @@ T.ProgressBar {
             visible: Player.hasChapters
 
             model: Player.chapters
-            Item {
-                Rectangle {
-                    id: seekpointsRect
-                    readonly property real startPosition: model.startPosition ??  0.0
-                    readonly property real endPosition: model.endPosition ?? 1.0
 
-                    readonly property int _currentChapter: {
-                        if (control.visualPosition < seekpointsRect.startPosition)
-                            return 1
-                        else if (control.visualPosition > seekpointsRect.endPosition)
-                            return -1
-                        return 0
-                    }
-                    on_CurrentChapterChanged: {
-                        if(_hovered)
-                            control._currentChapterHovered = _currentChapter === 0
-                    }
+            Rectangle {
+                id: seekpointsRect
+                readonly property real startPosition: model.startPosition ??  0.0
+                readonly property real endPosition: model.endPosition ?? 1.0
 
-                    readonly property bool _hovered: hoverHandler.hovered &&
-                                            (hoverHandler.point.position.x > x && hoverHandler.point.position.x < x+width)
+                readonly property bool _hovered: hoverHandler.hovered &&
+                                        (hoverHandler.point.position.x > x && hoverHandler.point.position.x < x+width)
 
-                    color: _currentChapter < 0 ? theme.fg.primary : control.backgroundColor
-                    width: sliderRect.width * seekpointsRect.endPosition - x - control._seekPointsDistance
-                    x: sliderRect.width * seekpointsRect.startPosition
+                x: sliderRect.width * seekpointsRect.startPosition
+                width: Math.max(0, sliderRect.width * seekpointsRect.endPosition - x - control._chapterGap)
+                height: control.barHeight
+                radius: control._radius
+                color: control._trackColor
+                clip: true
 
-                    Rectangle {
-                        id: progressRepRect
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        radius: parent.radius
-
-                        width: sliderRect.width * control.visualPosition - parent.x - control._seekPointsDistance
-                        visible: parent._currentChapter === 0
-                        color: theme.fg.primary
-
-                        // We use dynamic mutability group because time interpolation
-                        // may induce rapid change:
-                        // TODO: Do not use `Binding` when minimum Qt is 6.12:
-                        Binding {
-                            target: progressRepRect
-                            property: "mutabilityGroup"
-                            when: (progressRepRect.mutabilityGroup !== undefined)
-                            value: (Player.playingState === Player.PLAYING_STATE_PLAYING) ? Item.DynamicMutabilityGroup
-                                                                                          : Item.StaticMutabilityGroup
-                        }
-                    }
+                on_HoveredChanged: {
+                    if (_hovered)
+                        control._currentChapterHovered = true
                 }
 
-                transitions: [
-                    Transition {
-                        to: "*"
-                        SequentialAnimation{
-                            PropertyAction { targets: control; property: "_currentChapterHovered" }
-                            NumberAnimation {
-                                targets: [seekpointsRect, progressRepRect]; properties: "height, y, radius"
-                                duration: VLCStyle.duration_short; easing.type: Easing.InSine
-                            }
-                        }
-                    }
-                ]
+                Rectangle {
+                    id: progressRepRect
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    radius: parent.radius
 
-                states:[
-                    State {
-                        name: "visible"
-                        PropertyChanges {
-                            target: control;
-                            _currentChapterHovered: seekpointsRect._currentChapter === 0 ? false : control._currentChapterHovered
-                        }
-                        PropertyChanges { target: seekpointsRect; height: control.barHeight }
-                        PropertyChanges { target: seekpointsRect; y: 0 }
-                        PropertyChanges { target: seekpointsRect; radius: control._seekPointsRadius }
-                    },
-                    State {
-                        name: "visibleLarge"
-                        PropertyChanges {
-                            target: control;
-                            _currentChapterHovered: seekpointsRect._currentChapter === 0 ? true : control._currentChapterHovered
-                        }
-                        PropertyChanges { target: seekpointsRect; height: control._scaledBarHeight }
-                        PropertyChanges { target: seekpointsRect; y: control._scaledY }
-                        PropertyChanges { target: seekpointsRect; radius: control._scaledSeekPointsRadius }
-                    }
-                ]
+                    width: Helpers.clamp(sliderRect.width * control.visualPosition - parent.x, 0, parent.width)
+                    color: control._playedColor
 
-                state: (seekpointsRect._hovered || (seekpointsRect._currentChapter === 0 && fsm._state === fsm.fsmHeld))
-                       ? "visibleLarge"
-                       : "visible"
+                    // TODO: Do not use `Binding` when minimum Qt is 6.12:
+                    Binding {
+                        target: progressRepRect
+                        property: "mutabilityGroup"
+                        when: (progressRepRect.mutabilityGroup !== undefined)
+                        value: (Player.playingState === Player.PLAYING_STATE_PLAYING) ? Item.DynamicMutabilityGroup
+                                                                                      : Item.StaticMutabilityGroup
+                    }
+                }
             }
         }
 
@@ -431,9 +396,9 @@ T.ProgressBar {
             id: progressRect
             width: control.visualPosition * parent.width
             visible: !Player.hasChapters
-            color: theme.fg.primary
+            color: control._playedColor
             height: control.barHeight
-            radius: control._seekPointsRadius
+            radius: control._radius
 
             // We use dynamic mutability group because time interpolation
             // may induce rapid change:
@@ -458,8 +423,8 @@ T.ProgressBar {
 
             height: control.barHeight
             opacity: 0.4
-            color: theme.fg.neutral //FIXME buffer color ?
-            radius: control.barHeight
+            color: control._handleColor
+            radius: control._radius
 
             // TODO: Do not use `Binding` when minimum Qt is 6.12:
             Binding {
@@ -565,18 +530,26 @@ T.ProgressBar {
         }
     }
 
-    Rectangle {
+    // the handle sits at the end of the played part, full bar height
+    property Component handleDelegate: Rectangle {
+        implicitWidth: VLCStyle.seekHandle_width
+        implicitHeight: control.barHeight
+        radius: Math.min(VLCStyle.radius_xsmall, width / 2)
+        color: control._handleColor
+    }
+
+    // thin bars (miniplayer strip) only show the handle on hover
+    property bool alwaysShowHandle: control.barHeight >= VLCStyle.dp(12, VLCStyle.scale)
+
+    Loader {
         id: sliderHandle
 
-        property int _size: control.barHeight * 3
+        sourceComponent: control.handleDelegate
 
-        x: (control.visualPosition * control.availableWidth) - width / 2
+        x: Helpers.clamp(control.visualPosition * control.availableWidth - width / 2, 0, control.availableWidth - width)
         y: (control.barHeight - height) / 2
 
-        implicitWidth: sliderHandle._size
-        implicitHeight: sliderHandle._size
-        radius: VLCStyle.margin_small
-        color: theme.fg.primary
+        visible: control.enabled && (control.alwaysShowHandle || hoverHandler.hovered || control.visualFocus || dragHandler.active)
 
         // We use dynamic mutability group because time interpolation
         // may induce rapid change:
@@ -588,45 +561,29 @@ T.ProgressBar {
             value: (Player.playingState === Player.PLAYING_STATE_PLAYING) ? Item.DynamicMutabilityGroup
                                                                           : Item.StaticMutabilityGroup
         }
+    }
 
-        transitions: [
-            Transition {
-                to: "hidden"
-                SequentialAnimation {
-                    NumberAnimation {
-                        target: sliderHandle; properties: "implicitWidth,implicitHeight"
-                        to: 0
-                        duration: VLCStyle.duration_short; easing.type: Easing.OutSine
-                    }
-                    PropertyAction { target: sliderHandle; property: "visible"; value: false; }
-                }
-            },
-            Transition {
-                to: "visible"
-                SequentialAnimation {
-                    PropertyAction { target: sliderHandle; property: "visible"; value: true; }
-                    NumberAnimation {
-                        target: sliderHandle; properties: "implicitWidth,implicitHeight"
-                        to: sliderHandle._size
-                        duration: VLCStyle.duration_short; easing.type: Easing.InSine
-                    }
-                }
-            },
-            Transition {
-                to: "visibleLarge"
-                SequentialAnimation {
-                    PropertyAction { target: sliderHandle; property: "visible"; value: true; }
-                    NumberAnimation {
-                        target: sliderHandle; properties: "implicitWidth,implicitHeight"
-                        to: sliderHandle._size * (0.8 * control._hoveredScalingFactor)
-                        duration: VLCStyle.duration_short; easing.type: Easing.InSine
-                    }
-                }
-            }
-        ]
+    // Hover card: time (+ video thumbnail), "thumbnail" component 2151:9673
+    Loader {
+        id: previewLoader
 
-        state: (hoverHandler.hovered || control.visualFocus)
-               ? ((control._currentChapterHovered || (Player.hasChapters && fsm._state === fsm.fsmHeld)) ? "visibleLarge" : "visible")
-               : "hidden"
+        active: control.previewEnabled && control.enabled
+                && (hoverHandler.hovered || dragHandler.active)
+
+        z: 10
+
+        readonly property real pointerX: dragHandler.active ? dragHandler.centroid.position.x
+                                                            : (hoverHandler.hovered ? hoverHandler.point.position.x : 0)
+        readonly property real pointerPosition: Helpers.clamp(pointerX / Math.max(1, control.width), 0, 1)
+
+        x: Helpers.clamp(pointerX - width / 2, 0, Math.max(0, control.width - width))
+        y: -height - VLCStyle.space_8
+
+        sourceComponent: SeekPreviewCard {
+            position: previewLoader.pointerPosition
+            thumbnailEnabled: control.thumbnailEnabled
+            chapterName: Player.hasChapters ? Player.chapters.getNameAtPosition(previewLoader.pointerPosition) : ""
+        }
     }
 }
+

@@ -151,6 +151,7 @@ libqt_plugin_la_SOURCES = \
 	dialogs/preferences/preferences_widgets.hpp \
 	dialogs/preferences/simple_preferences.cpp \
 	dialogs/preferences/simple_preferences.hpp \
+	dialogs/settings/settingsbackend.cpp dialogs/settings/settingsbackend.hpp \
 	dialogs/sout/convert.cpp dialogs/sout/convert.hpp \
 	dialogs/sout/profile_selector.cpp \
 	dialogs/sout/profile_selector.hpp \
@@ -294,6 +295,8 @@ libqt_plugin_la_SOURCES = \
 	player/control_list_model.cpp player/control_list_model.hpp \
 	player/control_list_filter.cpp \
 	player/control_list_filter.hpp \
+	player/seek_preview.cpp \
+	player/seek_preview.hpp \
 	playlist/media.hpp \
 	playlist/playlist_common.hpp \
 	playlist/playlist_controller.cpp \
@@ -435,6 +438,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	dialogs/preferences/preferences.moc.cpp \
 	dialogs/preferences/preferences_widgets.moc.cpp \
 	dialogs/preferences/simple_preferences.moc.cpp \
+	dialogs/settings/settingsbackend.moc.cpp \
 	dialogs/sout/convert.moc.cpp \
 	dialogs/sout/profile_selector.moc.cpp \
 	dialogs/sout/sout.moc.cpp \
@@ -495,6 +499,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	player/player_controlbar_model.moc.cpp \
 	player/control_list_model.moc.cpp \
 	player/control_list_filter.moc.cpp \
+	player/seek_preview.moc.cpp \
 	playlist/playlist_controller.moc.cpp \
 	playlist/playlist_item.moc.cpp \
 	playlist/playlist_model.moc.cpp \
@@ -975,6 +980,19 @@ libqt_plugin_la_RES = \
 	pixmaps/prefs/spref_medialibrary.png \
 	pixmaps/prefs/spref_subtitles.png \
 	pixmaps/prefs/spref_video.png \
+	pixmaps/settings/audio.svg \
+	pixmaps/settings/controls.svg \
+	pixmaps/settings/extensions.svg \
+	pixmaps/settings/general.svg \
+	pixmaps/settings/interface.svg \
+	pixmaps/settings/library.svg \
+	pixmaps/settings/network.svg \
+	pixmaps/settings/performance.svg \
+	pixmaps/settings/playback.svg \
+	pixmaps/settings/privacy.svg \
+	pixmaps/settings/recording.svg \
+	pixmaps/settings/subtitles.svg \
+	pixmaps/settings/video.svg \
 	pixmaps/sd/assembleenationale.svg \
 	pixmaps/sd/capture-card.svg \
 	pixmaps/sd/directory.svg \
@@ -1044,13 +1062,32 @@ libqml_module_dialogs_a_QML = \
 	dialogs/dialogs/qml/Dialogs.qml \
 	dialogs/dialogs/qml/ModalDialog.qml \
 	dialogs/dialogs/qml/WindowDialog.qml \
+	dialogs/settings/qml/SettingsAccentSwatches.qml \
+	dialogs/settings/qml/SettingsAdvancedBar.qml \
+	dialogs/settings/qml/SettingsButton.qml \
+	dialogs/settings/qml/SettingsCategoryButton.qml \
+	dialogs/settings/qml/SettingsDropdown.qml \
+	dialogs/settings/qml/SettingsPageView.qml \
+	dialogs/settings/qml/SettingsPages.qml \
+	dialogs/settings/qml/SettingsRow.qml \
+	dialogs/settings/qml/SettingsSearchField.qml \
+	dialogs/settings/qml/SettingsSection.qml \
+	dialogs/settings/qml/SettingsSegmented.qml \
+	dialogs/settings/qml/SettingsSlider.qml \
+	dialogs/settings/qml/SettingsStartupVolume.qml \
+	dialogs/settings/qml/SettingsTextField.qml \
+	dialogs/settings/qml/SettingsToggle.qml \
+	dialogs/settings/qml/SettingsWindow.qml \
 	dialogs/toolbar/qml/EditorDNDDelegate.qml \
-	dialogs/toolbar/qml/EditorDNDView.qml\
+	dialogs/toolbar/qml/EditorDNDView.qml \
 	dialogs/toolbar/qml/EditorDummyButton.qml \
 	dialogs/toolbar/qml/EditorTabButton.qml \
 	dialogs/toolbar/qml/ToolbarEditor.qml \
 	dialogs/toolbar/qml/ToolbarEditorDialog.qml \
-	dialogs/toolbar/qml/ToolbarEditorButtonList.qml
+	dialogs/toolbar/qml/ToolbarEditorButtonList.qml \
+	dialogs/toolbar/qml/PlayerCustomizeDialog.qml \
+	dialogs/toolbar/qml/PlayerCustomizeRow.qml \
+	dialogs/toolbar/qml/PlayerCustomizeDragLayer.qml
 libqml_module_dialogs_a_Singleton_QML =
 libqml_module_dialogs_a_SOURCES = $(QML_MODULE_dialogs_SRC)
 nodist_libqml_module_dialogs_a_SOURCES = dialogs/qmlassets.cpp $(QML_MODULE_dialogs_NODIST_EXTRA)
@@ -1197,7 +1234,24 @@ libqml_module_player_a_QML = \
 	player/qml/TracksListPage.qml \
 	player/qml/ControlLayout.qml \
 	player/qml/ControlRepeater.qml \
-	player/qml/NavigationBox.qml
+	player/qml/NavigationBox.qml \
+	player/qml/PlayerSidePanel.qml \
+	player/qml/PlayerSidePanelList.qml \
+	player/qml/MusicPlayerView.qml \
+	player/qml/PopupList.qml \
+	player/qml/SegmentedValues.qml \
+	player/qml/AudioSettingsPopup.qml \
+	player/qml/SubtitlePopup.qml \
+	player/qml/PlaybackSettingsPopup.qml \
+	player/qml/ChoicePopup.qml \
+	player/qml/SeekPreviewCard.qml \
+	player/qml/WaveformBars.qml \
+	player/qml/WaveformSlider.qml \
+	player/qml/PlayerControlBar.qml \
+	player/qml/DashedOutline.qml \
+	player/qml/PlayerPopup.qml \
+	player/qml/PopupOption.qml \
+	player/qml/PopupSection.qml
 
 libqml_module_player_a_Singleton_QML = \
 	player/qml/PlayerControlbarControls.qml
@@ -1254,7 +1308,34 @@ libqml_module_playercontrols_a_QML = \
 	player/qml/controlbarcontrols/TeletextColorButton.qml \
 	player/qml/controlbarcontrols/TeletextWidget.qml \
 	player/qml/controlbarcontrols/VolumeWidget.qml \
-	player/qml/controlbarcontrols/Fallback.qml
+	player/qml/controlbarcontrols/Fallback.qml \
+	player/qml/controlbarcontrols/AudioSettingsButton.qml \
+	player/qml/controlbarcontrols/SubtitleButton.qml \
+	player/qml/controlbarcontrols/PlaybackSettingsButton.qml \
+	player/qml/controlbarcontrols/PlayerPopupButton.qml \
+	player/qml/controlbarcontrols/JumpButton.qml \
+	player/qml/controlbarcontrols/SkipBack10Button.qml \
+	player/qml/controlbarcontrols/SkipForward10Button.qml \
+	player/qml/controlbarcontrols/SkipBack15Button.qml \
+	player/qml/controlbarcontrols/SkipForward15Button.qml \
+	player/qml/controlbarcontrols/PipButton.qml \
+	player/qml/controlbarcontrols/HdrButton.qml \
+	player/qml/controlbarcontrols/ZoomButton.qml \
+	player/qml/controlbarcontrols/SidebarButton.qml \
+	player/qml/controlbarcontrols/SettingsButton.qml \
+	player/qml/controlbarcontrols/HomeButton.qml \
+	player/qml/controlbarcontrols/ReplayButton.qml \
+	player/qml/controlbarcontrols/ChaptersButton.qml \
+	player/qml/controlbarcontrols/FavoriteButton.qml \
+	player/qml/controlbarcontrols/AddBookmarkButton.qml \
+	player/qml/controlbarcontrols/PlaylistsButton.qml \
+	player/qml/controlbarcontrols/DividerWidget.qml \
+	player/qml/controlbarcontrols/TextInfoWidget.qml \
+	player/qml/controlbarcontrols/FileNameWidget.qml \
+	player/qml/controlbarcontrols/ArtistNameWidget.qml \
+	player/qml/controlbarcontrols/FolderNameWidget.qml \
+	player/qml/controlbarcontrols/PlaylistNameWidget.qml \
+	player/qml/controlbarcontrols/ThumbnailWidget.qml
 libqml_module_playercontrols_a_Singleton_QML =
 libqml_module_playercontrols_a_SOURCES = $(QML_MODULE_playercontrols_SRC)
 nodist_libqml_module_playercontrols_a_SOURCES = playercontrols/qmlassets.cpp $(QML_MODULE_playercontrols_NODIST_EXTRA)
