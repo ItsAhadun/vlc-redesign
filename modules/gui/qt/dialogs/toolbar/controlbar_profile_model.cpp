@@ -20,6 +20,8 @@
 #include <QSettings>
 #include <QChar>
 
+#include <algorithm>
+
 #include "qt.hpp"
 #include "controlbar_profile.hpp"
 #include "player/control_list_model.hpp"
@@ -31,6 +33,9 @@ constexpr QLatin1String SETTINGS_KEY_SELECTEDPROFILE {"SelectedProfile"};
 constexpr QLatin1String SETTINGS_ARRAYNAME_PROFILES {"Profiles"};
 constexpr QLatin1String SETTINGS_KEY_NAME {"Name"};
 constexpr QLatin1String SETTINGS_KEY_MODEL {"Model"};
+// bumped when the default style changes in a way existing profiles should get
+constexpr QLatin1String SETTINGS_KEY_DEFAULTS_VERSION {"DefaultsVersion"};
+constexpr int DEFAULTS_VERSION = 1; // 1: redesign player control bar
 
 constexpr QChar SETTINGS_CONTROL_SEPARATOR {','};
 constexpr QChar SETTINGS_CONFIGURATION_SEPARATOR {'|'};
@@ -101,23 +106,21 @@ decltype (ControlbarProfileModel::m_defaults)
                         PlayerControlbarModel::Videoplayer,
                         {
                             {
+                                // redesign: [prev play next] time [seek] duration [right]
                                 {
-                                    ControlListModel::LANG_BUTTON,
-                                    ControlListModel::BOOKMARK_BUTTON,
-                                    ControlListModel::EXTENDED_BUTTON,
-                                    ControlListModel::NAVIGATION_BUTTONS
-                                },
-                                {
-                                    ControlListModel::SKIP_BACK_BUTTON,
                                     ControlListModel::PREVIOUS_BUTTON,
                                     ControlListModel::PLAY_BUTTON,
-                                    ControlListModel::NEXT_BUTTON,
-                                    ControlListModel::SKIP_FW_BUTTON
+                                    ControlListModel::NEXT_BUTTON
+                                },
+                                {
                                 },
                                 {
                                     ControlListModel::VOLUME,
-                                    ControlListModel::RENDERER_BUTTON,
-                                    ControlListModel::FULLSCREEN_BUTTON
+                                    ControlListModel::AUDIO_SETTINGS_BUTTON,
+                                    ControlListModel::SUBTITLE_BUTTON,
+                                    ControlListModel::PLAYBACK_SETTINGS_BUTTON,
+                                    ControlListModel::WIDGET_SPACER,
+                                    ControlListModel::PLAYLIST_BUTTON
                                 }
                             }
                         }
@@ -126,22 +129,21 @@ decltype (ControlbarProfileModel::m_defaults)
                         PlayerControlbarModel::Audioplayer,
                         {
                             {
+                                // redesign, music player variant
                                 {
-                                    ControlListModel::LANG_BUTTON,
-                                    ControlListModel::BOOKMARK_BUTTON,
-                                    ControlListModel::EXTENDED_BUTTON
+                                    ControlListModel::PREVIOUS_BUTTON,
+                                    ControlListModel::SKIP_BACK_15_BUTTON,
+                                    ControlListModel::PLAY_BUTTON,
+                                    ControlListModel::SKIP_FW_15_BUTTON,
+                                    ControlListModel::NEXT_BUTTON
                                 },
                                 {
-                                    ControlListModel::RANDOM_BUTTON,
-                                    ControlListModel::PREVIOUS_BUTTON,
-                                    ControlListModel::PLAY_BUTTON,
-                                    ControlListModel::NEXT_BUTTON,
-                                    ControlListModel::LOOP_BUTTON
                                 },
                                 {
                                     ControlListModel::VOLUME,
-                                    ControlListModel::RENDERER_BUTTON,
-                                    ControlListModel::FULLSCREEN_BUTTON
+                                    ControlListModel::AUDIO_SETTINGS_BUTTON,
+                                    ControlListModel::WIDGET_SPACER,
+                                    ControlListModel::PLAYLIST_BUTTON
                                 }
                             }
                         }
@@ -485,6 +487,10 @@ ControlbarProfileModel::ControlbarProfileModel(QSettings* settings, QObject *par
             // If initial reload fails, load the default profiles:
             insertDefaults();
         }
+        else
+        {
+            migrateDefaults();
+        }
     }, Qt::QueuedConnection);
 }
 
@@ -505,6 +511,42 @@ void ControlbarProfileModel::insertDefaults()
     }
 
     setSelectedProfile(0);
+}
+
+void ControlbarProfileModel::migrateDefaults()
+{
+    const auto groupName = metaObject()->className();
+    const int version = m_settings->value(QString("%1/%2").arg(groupName, SETTINGS_KEY_DEFAULTS_VERSION), 0).toInt();
+    if (version >= DEFAULTS_VERSION)
+        return;
+
+    // The redesign changed the layout of the video and audio player control
+    // bars of the default style: update the stored "Default Style" profile so
+    // existing users get the new layout (other profiles are left untouched).
+    const auto it = std::find_if(m_defaults.cbegin(), m_defaults.cend(), [](const Profile& p) {
+        return p.id == Style::DEFAULT_STYLE;
+    });
+    assert(it != m_defaults.cend());
+
+    const QString defaultName = qfut(it->name);
+    for (int i = 0; i < m_profiles.size(); ++i)
+    {
+        ControlbarProfile* profile = m_profiles.at(i);
+        if (profile->name() != defaultName)
+            continue;
+
+        for (const auto& conf : it->modelData)
+        {
+            if (conf.identifier == PlayerControlbarModel::Videoplayer
+                || conf.identifier == PlayerControlbarModel::Audioplayer)
+                profile->setModelData(conf.identifier, conf.data);
+        }
+        profile->resetDirty();
+        setSelectedProfile(i);
+        break;
+    }
+
+    save();
 }
 
 QString ControlbarProfileModel::generateUniqueName(const QString &name)
@@ -701,6 +743,7 @@ void ControlbarProfileModel::save(bool clearDirty) const
     m_settings->remove(""); // clear the group before save
 
     m_settings->setValue(SETTINGS_KEY_SELECTEDPROFILE, selectedProfile());
+    m_settings->setValue(SETTINGS_KEY_DEFAULTS_VERSION, DEFAULTS_VERSION);
 
     m_settings->beginWriteArray(SETTINGS_ARRAYNAME_PROFILES);
 

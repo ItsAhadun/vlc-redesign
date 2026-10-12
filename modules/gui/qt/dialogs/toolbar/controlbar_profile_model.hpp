@@ -118,6 +118,8 @@ private:
 
     static const QVector<Profile> m_defaults;
 
+    void migrateDefaults();
+
 private:
     void insertDefaults();
 
