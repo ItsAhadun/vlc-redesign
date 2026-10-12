@@ -1,0 +1,220 @@
+# Icon index (Figma frame 42:356 "Icon")
+
+208 component symbols, all 24x24 px. Variant properties: `name`, `direction` (default/left/right/up/down), `state` (default/active/selected), `value` (volume level: none/low/medium/high), `EQ` (equalizer preset glyphs), `two-tone` (yes/no). 96 distinct `name`s.
+
+File naming: `<name>[-<direction>][-<value>][-<eq>][-<state>][-twotone].svg` (lower-case, spaces -> `-`). Two pairs of symbols in Figma carry identical properties (album 6206:13629 / 6206:13653, subtitle 1911:8286 / 2461:9663); the second of each pair is suffixed `-2`.
+
+**Status: the SVG files are NOT exported yet.** The Figma MCP Starter-plan call quota ran out during extraction (see `design/SPEC.md` section 0). `manifest.json` in this folder maps node id -> file name so the export can be scripted in one pass once quota is available: Plugin API `node.exportAsync({format: "SVG_STRING"})` (use_figma returns at most 20 KB, so about 10-15 icons per call), or `download_assets` per node id.
+
+Color semantics observed in the screenshots: inactive icons render in Dark/FG/A2 `#8f8f8f`; `state=active` icons (e.g. the current nav-rail entry) render in the accent (Dark/Accent/Main `#d37918`). `two-tone=yes` variants are presumably the same glyph with an accent-colored part; verify after export. Recolor at runtime (icon font / ColorImage); do not bake colors into the QML.
+
+| file | name | direction | state | value | EQ | two-tone | node id |
+|---|---|---|---|---|---|---|---|
+| settings.svg | settings | default | default | default | default | no | `42:355` |
+| settings-twotone.svg | settings | default | default | default | default | yes | `2493:9293` |
+| playback-settings.svg | playback settings | default | default | default | default | no | `2230:9222` |
+| playback-settings-active.svg | playback settings | default | active | default | default | no | `2238:9232` |
+| settings-active.svg | settings | default | active | default | default | no | `470:507` |
+| preferences.svg | preferences | default | default | default | default | no | `1803:2957` |
+| preferences-active.svg | preferences | default | active | default | default | no | `1803:2965` |
+| playlist.svg | playlist | default | default | default | default | no | `42:357` |
+| playlist-twotone.svg | playlist | default | default | default | default | yes | `2461:9719` |
+| playlist-active.svg | playlist | default | active | default | default | no | `858:5098` |
+| lists.svg | lists | default | default | default | default | no | `217:191` |
+| lists-active.svg | lists | default | active | default | default | no | `467:492` |
+| hotkeys.svg | hotkeys | default | default | default | default | no | `1089:4450` |
+| hotkeys-twotone.svg | hotkeys | default | default | default | default | yes | `2493:9253` |
+| hotkeys-active.svg | hotkeys | default | active | default | default | no | `1089:4464` |
+| subtitles.svg | subtitles | default | default | default | default | no | `42:398` |
+| subtitles-twotone.svg | subtitles | default | default | default | default | yes | `2461:9635` |
+| subtitles-active.svg | subtitles | default | active | default | default | no | `467:497` |
+| audio.svg | audio | default | default | default | default | no | `44:407` |
+| audio-twotone.svg | audio | default | default | default | default | yes | `2461:9697` |
+| audio-active.svg | audio | default | active | default | default | no | `496:2439` |
+| play.svg | play | default | default | default | default | no | `44:419` |
+| playback.svg | playback | default | default | default | default | no | `999:4802` |
+| playback-selected-twotone.svg | playback | default | selected | default | default | yes | `6073:13944` |
+| playback-twotone.svg | playback | default | default | default | default | yes | `4004:12338` |
+| playback-active.svg | playback | default | active | default | default | no | `3180:17978` |
+| pause.svg | pause | default | default | default | default | no | `44:427` |
+| next.svg | next | default | default | default | default | no | `45:12` |
+| next-twotone.svg | next | default | default | default | default | yes | `6073:13875` |
+| stop.svg | stop | default | default | default | default | no | `187:322` |
+| stop-twotone.svg | stop | default | default | default | default | yes | `6072:13836` |
+| previous.svg | previous | default | default | default | default | no | `45:18` |
+| previous-twotone.svg | previous | default | default | default | default | yes | `6073:13879` |
+| forward-10-sec.svg | forward-10-sec | default | default | default | default | no | `45:22` |
+| forward-15-sec.svg | forward-15-sec | default | default | default | default | no | `45:32` |
+| backward-10-sec.svg | backward-10-sec | default | default | default | default | no | `45:28` |
+| backward-15-sec.svg | backward-15-sec | default | default | default | default | no | `45:36` |
+| refresh.svg | refresh | default | default | default | default | no | `1622:3137` |
+| refresh-twotone.svg | refresh | default | default | default | default | yes | `2461:9784` |
+| replay.svg | replay | default | default | default | default | no | `1919:9572` |
+| recent.svg | recent | default | default | default | default | no | `2154:9699` |
+| recent-twotone.svg | recent | default | default | default | default | yes | `2493:9246` |
+| volume-high.svg | volume | default | default | high | default | no | `182:179` |
+| close-medium.svg | close | default | default | medium | default | no | `182:187` |
+| close-low.svg | close | default | default | low | default | no | `182:193` |
+| close-none.svg | close | default | default | none | default | no | `182:198` |
+| move.svg | move | default | default | default | default | no | `463:417` |
+| close.svg | close | default | default | default | default | no | `45:40` |
+| minimize.svg | minimize | default | default | default | default | no | `48:46` |
+| maximize.svg | maximize | default | default | default | default | no | `48:51` |
+| fullscreen.svg | fullscreen | default | default | default | default | no | `48:54` |
+| fullscreen-active.svg | fullscreen | default | active | default | default | no | `6031:13553` |
+| home.svg | home | default | default | default | default | no | `70:828` |
+| folder.svg | folder | default | default | default | default | no | `51:808` |
+| folder-twotone.svg | folder | default | default | default | default | yes | `2461:9734` |
+| new-folder.svg | new folder | default | default | default | default | no | `2139:9022` |
+| new-folder-twotone.svg | new folder | default | default | default | default | yes | `2461:9779` |
+| folder-active.svg | folder | default | active | default | default | no | `87:1031` |
+| folder-selected.svg | folder | default | selected | default | default | no | `467:502` |
+| sidebar-left.svg | sidebar | left | default | default | default | no | `69:814` |
+| sidebar-right.svg | sidebar | right | default | default | default | no | `6586:17393` |
+| album.svg | album | default | default | default | default | no | `6206:13629` |
+| album-2.svg | album | default | default | default | default | no | `6206:13653` |
+| expand-sidebar.svg | expand-sidebar | default | default | default | default | no | `858:5697` |
+| collapse-sidebar.svg | collapse-sidebar | default | default | default | default | no | `858:5703` |
+| sidebar-active.svg | sidebar | default | active | default | default | no | `87:1041` |
+| music.svg | music | default | default | default | default | no | `999:4806` |
+| video.svg | video | default | default | default | default | no | `999:4810` |
+| video-twotone.svg | video | default | default | default | default | yes | `5886:24408` |
+| video-active.svg | video | default | active | default | default | no | `1102:5055` |
+| songs.svg | songs | default | default | default | default | no | `71:851` |
+| songs-active.svg | songs | default | active | default | default | no | `87:1009` |
+| songs-selected.svg | songs | default | selected | default | default | no | `470:592` |
+| videos.svg | videos | default | default | default | default | no | `71:857` |
+| videos-active.svg | videos | default | active | default | default | no | `87:1015` |
+| videos-selected.svg | videos | default | selected | default | default | no | `470:587` |
+| streaming.svg | streaming | default | default | default | default | no | `70:833` |
+| streaming-twotone.svg | streaming | default | default | default | default | yes | `2461:9672` |
+| streaming-active.svg | streaming | default | active | default | default | no | `477:1202` |
+| streaming-selected.svg | streaming | default | selected | default | default | no | `477:1208` |
+| tv.svg | tv | default | default | default | default | no | `477:1096` |
+| tv-active.svg | tv | default | active | default | default | no | `477:1101` |
+| tv-selected.svg | tv | default | selected | default | default | no | `477:1107` |
+| home-active.svg | home | default | active | default | default | no | `87:1026` |
+| home-selected.svg | home | default | selected | default | default | no | `470:597` |
+| divider.svg | divider | default | default | default | default | no | `71:863` |
+| chevron-down.svg | chevron | down | default | default | default | no | `71:868` |
+| arrow-down.svg | arrow | down | default | default | default | no | `71:881` |
+| arrow-down-twotone.svg | arrow | down | default | default | default | yes | `2461:9739` |
+| arrow-up.svg | arrow | up | default | default | default | no | `71:884` |
+| arrow-up-twotone.svg | arrow | up | default | default | default | yes | `2461:9744` |
+| upload-up-twotone.svg | upload | up | default | default | default | yes | `6215:13606` |
+| arrow-right.svg | arrow | right | default | default | default | no | `71:887` |
+| arrow-right-twotone.svg | arrow | right | default | default | default | yes | `2461:9749` |
+| arrow-left.svg | arrow | left | default | default | default | no | `71:890` |
+| arrow-left-twotone.svg | arrow | left | default | default | default | yes | `2461:9754` |
+| open.svg | open | default | default | default | default | no | `330:267` |
+| repeat-right.svg | repeat | right | default | default | default | no | `187:470` |
+| repeat-right-twotone.svg | repeat | right | default | default | default | yes | `2460:9614` |
+| shuffle-right.svg | shuffle | right | default | default | default | no | `187:474` |
+| shuffle-right-twotone.svg | shuffle | right | default | default | default | yes | `2461:9618` |
+| chevron-up.svg | chevron | up | default | default | default | no | `71:872` |
+| chevron-right.svg | chevron | right | default | default | default | no | `71:875` |
+| chevron-left.svg | chevron | left | default | default | default | no | `71:878` |
+| more.svg | more | default | default | default | default | no | `247:418` |
+| vlc.svg | vlc | default | default | default | default | no | `48:57` |
+| add.svg | add | default | default | default | default | no | `463:550` |
+| remove.svg | remove | default | default | default | default | no | `463:560` |
+| view.svg | view | default | default | default | default | no | `856:3212` |
+| view-active.svg | view | default | active | default | default | no | `856:3220` |
+| link.svg | link | default | default | default | default | no | `774:1038` |
+| link-active.svg | link | default | active | default | default | no | `774:1075` |
+| link-twotone.svg | link | default | default | default | default | yes | `6063:13611` |
+| check-active.svg | check | default | active | default | default | no | `494:2394` |
+| check-selected.svg | check | default | selected | default | default | no | `2428:14606` |
+| check-selected-twotone.svg | check | default | selected | default | default | yes | `4004:12348` |
+| check.svg | check | default | default | default | default | no | `494:2400` |
+| sort.svg | sort | default | default | default | default | no | `463:564` |
+| sort-active.svg | sort | default | active | default | default | no | `856:2206` |
+| search.svg | search | default | default | default | default | no | `856:2147` |
+| zoom.svg | zoom | default | default | default | default | no | `2154:9680` |
+| artist.svg | artist | default | default | default | default | no | `858:5155` |
+| profile.svg | profile | default | default | default | default | no | `2437:14784` |
+| profile-twotone.svg | profile | default | default | default | default | yes | `2493:9300` |
+| artist-active.svg | artist | default | active | default | default | no | `858:5164` |
+| accessibility.svg | accessibility | default | default | default | default | no | `999:4914` |
+| info.svg | info | default | default | default | default | no | `2139:8985` |
+| info-twotone.svg | info | default | default | default | default | yes | `2461:9651` |
+| interface.svg | interface | default | default | default | default | no | `999:4960` |
+| interface-active.svg | interface | default | active | default | default | no | `1088:4044` |
+| subtitle.svg | subtitle | default | default | default | default | no | `1911:8286` |
+| subtitle-2.svg | subtitle | default | default | default | default | no | `2461:9663` |
+| file.svg | file | default | default | default | default | no | `2107:6307` |
+| file-twotone.svg | file | default | default | default | default | yes | `2461:9644` |
+| swap.svg | swap | default | default | default | default | no | `1915:8362` |
+| swap-twotone.svg | swap | default | default | default | default | yes | `2461:9628` |
+| window.svg | window | default | default | default | default | no | `2107:6312` |
+| window-twotone.svg | window | default | default | default | default | yes | `2461:9640` |
+| wrench.svg | wrench | default | default | default | default | no | `2107:6319` |
+| paint.svg | paint | default | default | default | default | no | `2150:9212` |
+| paint-twotone.svg | paint | default | default | default | default | yes | `2493:9283` |
+| paint-active.svg | paint | default | active | default | default | no | `2150:9248` |
+| grid.svg | grid | default | default | default | default | no | `2107:6523` |
+| list.svg | list | default | default | default | default | no | `2107:6531` |
+| 0.svg | 0 | default | default | default | default | no | `2107:6596` |
+| speed.svg | speed | default | default | default | default | no | `2115:7386` |
+| speed-active.svg | speed | default | active | default | default | no | `2115:7391` |
+| record.svg | record | default | default | default | default | no | `2115:7482` |
+| record-active.svg | record | default | active | default | default | no | `6571:16751` |
+| record-twotone.svg | record | default | default | default | default | yes | `6073:13901` |
+| snapshot.svg | snapshot | default | default | default | default | no | `2115:7492` |
+| queue.svg | queue | default | default | default | default | no | `2127:7523` |
+| queue-twotone.svg | queue | default | default | default | default | yes | `2461:9714` |
+| chapters.svg | chapters | default | default | default | default | no | `2127:7531` |
+| chapters-twotone.svg | chapters | default | default | default | default | yes | `6321:14144` |
+| bookmarks.svg | bookmarks | default | default | default | default | no | `2127:7548` |
+| bookmarks-twotone.svg | bookmarks | default | default | default | default | yes | `6320:13921` |
+| bookmark.svg | bookmark | default | default | default | default | no | `2127:7779` |
+| spectometer-twotone.svg | spectometer | default | default | default | default | yes | `2138:8026` |
+| spectrum-twotone.svg | spectrum | default | default | default | default | yes | `2139:8048` |
+| scope-twotone.svg | scope | default | default | default | default | yes | `2139:8064` |
+| waveform-twotone.svg | waveform | default | default | default | default | yes | `2139:8078` |
+| pip.svg | PiP | default | default | default | default | no | `2139:8439` |
+| hdr.svg | HDR | default | default | default | default | no | `2146:9032` |
+| eq.svg | EQ | default | default | default | default | no | `2372:8559` |
+| eq-classical.svg | EQ | default | default | default | classical | no | `2372:8571` |
+| eq-club.svg | EQ | default | default | default | club | no | `2372:8578` |
+| eq-dance.svg | EQ | default | default | default | dance | no | `2372:8588` |
+| eq-full-bass.svg | EQ | default | default | default | full bass | no | `6114:13932` |
+| eq-full-bass-and-treble.svg | EQ | default | default | default | full bass and treble | no | `6114:13938` |
+| eq-full-treble.svg | EQ | default | default | default | full treble | no | `6114:13944` |
+| eq-headphones.svg | EQ | default | default | default | headphones | no | `6114:13955` |
+| eq-rock.svg | EQ | default | default | default | rock | no | `6114:13996` |
+| eq-ska.svg | EQ | default | default | default | ska | no | `6114:14002` |
+| eq-soft.svg | EQ | default | default | default | soft | no | `6114:14008` |
+| eq-techno.svg | EQ | default | default | default | techno | no | `6114:14021` |
+| eq-soft-rock.svg | EQ | default | default | default | soft rock | no | `6114:14014` |
+| eq-large-hall.svg | EQ | default | default | default | large hall | no | `6114:13961` |
+| eq-reggae.svg | EQ | default | default | default | reggae | no | `6114:13967` |
+| eq-pop.svg | EQ | default | default | default | pop | no | `6114:13985` |
+| eq-party.svg | EQ | default | default | default | party | no | `6114:13979` |
+| eq-live.svg | EQ | default | default | default | live | no | `6114:13973` |
+| thumbnail.svg | thumbnail | default | default | default | default | no | `2404:9198` |
+| thumbnail-high.svg | thumbnail | default | default | high | default | no | `2404:9204` |
+| thumbnail-medium.svg | thumbnail | default | default | medium | default | no | `2404:9211` |
+| thumbnail-low.svg | thumbnail | default | default | low | default | no | `2404:9215` |
+| favorite.svg | favorite | default | default | default | default | no | `2430:14629` |
+| favorite-twotone.svg | favorite | default | default | default | default | yes | `2511:9352` |
+| favorite-active.svg | favorite | default | active | default | default | no | `2430:14666` |
+| edit.svg | edit | default | default | default | default | no | `2437:14888` |
+| save.svg | save | default | default | default | default | no | `2459:9542` |
+| save-twotone.svg | save | default | default | default | default | yes | `2459:9548` |
+| disc-twotone.svg | disc | default | default | default | default | yes | `2460:9552` |
+| disc.svg | disc | default | default | default | default | no | `5884:24330` |
+| capture-device.svg | capture-device | default | default | default | default | no | `2493:9307` |
+| capture-device-twotone.svg | capture-device | default | default | default | default | yes | `2493:9342` |
+| plugins.svg | plugins | default | default | default | default | no | `2516:9369` |
+| plugins-twotone.svg | plugins | default | default | default | default | yes | `2516:9378` |
+| plugins-active.svg | plugins | default | active | default | default | no | `2516:9375` |
+| privacy.svg | privacy | default | default | default | default | no | `3046:10386` |
+| privacy-twotone.svg | privacy | default | default | default | default | yes | `3050:10420` |
+| privacy-active.svg | privacy | default | active | default | default | no | `3050:10424` |
+| quit.svg | quit | default | default | default | default | no | `6073:14046` |
+| quit-twotone.svg | quit | default | default | default | default | yes | `6073:14054` |
+| ui.svg | ui | default | default | default | default | no | `6075:14088` |
+| ui-twotone.svg | ui | default | default | default | default | yes | `6075:14095` |
+| genre.svg | genre | default | default | default | default | no | `6191:13585` |
+| genre-twotone.svg | genre | default | default | default | default | yes | `6202:13602` |
