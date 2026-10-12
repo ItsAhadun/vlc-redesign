@@ -32,7 +32,7 @@ import VLC.Dialogs
 import VLC.Util
 
 // Player page of the redesign (design/SPEC.md 2.1):
-//   title bar (40, LocalTopbar, owned by the main window chrome)
+//   title bar (40, AppTitleBar, owned by the main window chrome)
 //   [side panel 427] [video area, 8 px frame, rounded] [play queue]
 //   control bar (54, PlayerControlBar)
 // Music (no video): blurred artwork background, big art, waveform seek bar.
@@ -442,7 +442,7 @@ FocusScope {
         }
     }
 
-    // Title bar slot: the main window title bar (LocalTopbar, owned by the
+    // Title bar slot: the main window title bar (AppTitleBar, owned by the
     // window chrome) with the player hooks. The side panel toggle of the title
     // bar drives MainCtx.playerSidePanelVisible.
     Item {
@@ -462,29 +462,47 @@ FocusScope {
 
         focus: true
 
-        LocalTopbar {
+        AppTitleBar {
             id: topBar
 
             anchors.fill: parent
 
-            useAcrylic: false
-
             focus: true
 
-            navigationVisible: MainCtx.playerSidePanelVisible
-            playqueueVisible: playlistVisibility.isPlaylistVisible
+            barPalette: windowTheme.palette
 
-            plListView: {
-                if (playlistpopup.active)
-                    return playlistpopup.item
-                else if (playlistWindowLoader?.status === Loader.Ready)
-                    return playlistWindowLoader.item.playlistView
-                else
-                    return null
+            showSidebarToggle: true
+            sidebarExpanded: MainCtx.playerSidePanelVisible
+            folderName: currentFolderName
+
+            // parent folder of the playing media (folder chip, player0.png)
+            readonly property string currentFolderUrl: {
+                const url = MainPlaylistController.currentItem?.url?.toString() ?? ""
+                const index = url.lastIndexOf("/")
+                return (index > 0) ? url.substring(0, index) : ""
+            }
+            readonly property string currentFolderName: {
+                const parts = currentFolderUrl.split("/").filter((p) => p.length > 0)
+                if (parts.length === 0 || !currentFolderUrl.startsWith("file:"))
+                    return ""
+                try {
+                    return decodeURIComponent(parts[parts.length - 1])
+                } catch (e) {
+                    return parts[parts.length - 1]
+                }
             }
 
-            onToggleNavigationVisibility: MainCtx.playerSidePanelVisible = !MainCtx.playerSidePanelVisible
-            onTogglePlayqueueVisibility: playlistVisibility.togglePlaylistVisibility()
+            onToggleSidebar: MainCtx.playerSidePanelVisible = !MainCtx.playerSidePanelVisible
+
+            // go to the library videos grouped by folder
+            // TODO: open the folder itself (needs a mrl -> ML folder lookup)
+            onFolderClicked: {
+                MainCtx.playerView = false
+                if (MainCtx.mediaLibraryAvailable) {
+                    MainCtx.grouping = MainCtx.GROUPING_FOLDER
+                    History.push(["video"], Qt.MouseFocusReason)
+                }
+            }
 
             Navigation.parentItem: rootPlayer
             Navigation.downItem: {

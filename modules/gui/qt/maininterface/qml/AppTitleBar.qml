@@ -55,6 +55,11 @@ T.ToolBar {
 
     property alias menuButton: menuButton
 
+    // the bar outlines its customizable slots itself in the player customize
+    // mode (the player then skips its whole bar fallback outline)
+    property bool customizeOutlines: true
+    readonly property bool _customizing: MainCtx.playerCustomizeMode && root.showSidebarToggle
+
     signal toggleSidebar()
     signal folderClicked()
 
@@ -117,6 +122,8 @@ T.ToolBar {
                 description: qsTr("Menu")
                 checked: mainMenu.visible
 
+                SlotOutline { }
+
                 Navigation.parentItem: leftCluster
                 Navigation.rightItem: sidebarButton
 
@@ -136,7 +143,10 @@ T.ToolBar {
                 // TODO(icons): redesign expand-sidebar / collapse-sidebar glyphs
                 text: VLCIcons.panel_left
                 description: root.sidebarExpanded ? qsTr("Collapse sidebar") : qsTr("Expand sidebar")
+                checked: root.sidebarExpanded
                 color: theme.fg.primary
+
+                SlotOutline { }
 
                 Navigation.parentItem: leftCluster
                 Navigation.leftItem: menuButton
@@ -176,6 +186,8 @@ T.ToolBar {
                 Keys.onPressed: (event) => Navigation.defaultKeyAction(event)
 
                 onClicked: root.folderClicked()
+
+                SlotOutline { }
 
                 background: Rectangle {
                     radius: VLCStyle.radius_small
@@ -221,6 +233,13 @@ T.ToolBar {
             color: root._palette.fgA2
 
             Accessible.role: Accessible.TitleBar
+
+            SlotOutline {
+                anchors.fill: undefined
+                anchors.centerIn: parent
+                width: titleLabel.paintedWidth + VLCStyle.space_16
+                height: VLCStyle.iconButton_size
+            }
         }
 
         Row {
@@ -325,6 +344,14 @@ T.ToolBar {
     MainMenu {
         id: mainMenu
         menuPalette: theme.palette
+    }
+
+    // dashed outline of a customizable slot (customize mode)
+    component SlotOutline: DashedOutline {
+        anchors.fill: parent
+        anchors.margins: -VLCStyle.space_2
+        visible: root._customizing
+        color: theme.palette.fgA3
     }
 
     // Icon button of the title bar: 28x28, 24 px glyph (Icon Wrapper hover)
