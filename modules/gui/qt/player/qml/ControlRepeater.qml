@@ -238,12 +238,9 @@ Repeater {
 
         function _focusIfFocusable(_loader) {
             if (_loader?.item?.focus) {
-                if (item.focusReason !== undefined)
-                    _loader.item.forceActiveFocus(item.focusReason)
-                else {
-                    console.warn("focusReason is not available in %1!".arg(item))
-                    _loader.item.forceActiveFocus()
-                }
+                // plain Items (e.g. SpacerWidget, which gets the focus when it
+                // is the first control) have no focusReason
+                _loader.item.forceActiveFocus(item.focusReason ?? Qt.OtherFocusReason)
                 return true
             } else {
                 return false

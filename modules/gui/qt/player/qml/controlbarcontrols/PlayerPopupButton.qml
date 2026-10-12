@@ -71,7 +71,9 @@ Widgets.IconToolButton {
     }
 
     function forceUnlock() {
-        popupLoader.item?.close()
+        // may be called while the button is being destroyed (the ids are
+        // then already null)
+        popupLoader?.item?.close()
     }
 
     // Children
