@@ -1047,7 +1047,7 @@ libqml_module_dialogs_a_QML = \
 	dialogs/dialogs/qml/ModalDialog.qml \
 	dialogs/dialogs/qml/WindowDialog.qml \
 	dialogs/toolbar/qml/EditorDNDDelegate.qml \
-	dialogs/toolbar/qml/EditorDNDView.qml\
+	dialogs/toolbar/qml/EditorDNDView.qml \
 	dialogs/toolbar/qml/EditorDummyButton.qml \
 	dialogs/toolbar/qml/EditorTabButton.qml \
 	dialogs/toolbar/qml/ToolbarEditor.qml \
@@ -1198,6 +1198,9 @@ libqml_module_player_a_QML = \
 	player/qml/ControlLayout.qml \
 	player/qml/ControlRepeater.qml \
 	player/qml/NavigationBox.qml \
+	player/qml/PlayerSidePanel.qml \
+	player/qml/PlayerSidePanelList.qml \
+	player/qml/MusicPlayerView.qml \
 	player/qml/PopupList.qml \
 	player/qml/SegmentedValues.qml \
 	player/qml/AudioSettingsPopup.qml \

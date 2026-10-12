@@ -34,6 +34,11 @@ Item {
 
     property Item bgContent: null
 
+    // when set, "Customize Player" (showToolbarEditorDialog) calls this
+    // function instead of opening the toolbar editor window (the player page
+    // provides its in-place customize mode)
+    property var toolbarEditorHandler: null
+
     //---------------------------------------------------------------------------------------------
     // Signal
     //---------------------------------------------------------------------------------------------
@@ -603,6 +608,10 @@ Item {
             target: DialogsProvider
 
             function onShowToolbarEditorDialog() {
+                if (typeof root.toolbarEditorHandler === "function") {
+                    root.toolbarEditorHandler()
+                    return
+                }
                 toolbarEditorDialogLoader.active = true
                 toolbarEditorDialogLoader.item.open()
             }
