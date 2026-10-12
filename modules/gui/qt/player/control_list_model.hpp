@@ -82,36 +82,44 @@ public:
         NAVIGATION_BUTTONS,
         PROGRAM_BUTTON,
         NAVIGATION_BOX,
-        RESERVED_0X2B,
-        RESERVED_0X2C,
-        RESERVED_0X2D,
-        RESERVED_0X2E,
-        RESERVED_0X2F,
-        RESERVED_0X30,
-        RESERVED_0X31,
-        RESERVED_0X32,
-        RESERVED_0X33,
-        RESERVED_0X34,
-        RESERVED_0X35,
-        RESERVED_0X36,
-        RESERVED_0X37,
-        RESERVED_0X38,
-        RESERVED_0X39,
-        RESERVED_0X3A,
-        RESERVED_0X3B,
-        RESERVED_0X3C,
+        // redesign (design/SPEC.md "Controls" and "Customize Player"):
+        AUDIO_SETTINGS_BUTTON,      // 0x2B audio tracks / visualizer / equalizer popup
+        SUBTITLE_BUTTON,            // subtitle track popup
+        PLAYBACK_SETTINGS_BUTTON,   // speed, aspect ratio, zoom... popup
+        SKIP_BACK_10_BUTTON,
+        SKIP_FW_10_BUTTON,
+        SKIP_BACK_15_BUTTON,
+        SKIP_FW_15_BUTTON,
+        PIP_BUTTON,
+        HDR_BUTTON,
+        ZOOM_BUTTON,
+        SIDEBAR_BUTTON,
+        SETTINGS_BUTTON,
+        HOME_BUTTON,
+        REPLAY_BUTTON,
+        CHAPTERS_BUTTON,
+        FAVORITE_BUTTON,
+        ADD_BOOKMARK_BUTTON,
+        PLAYLISTS_BUTTON,           // 0x3C
         RESERVED_0X3D,
         RESERVED_0X3E,
         RESERVED_0X3F,
 
         WIDGET_SPACER = 0x40,
         WIDGET_SPACER_EXTEND,
+        WIDGET_DIVIDER,             // 0x42
+        THUMBNAIL_WIDGET,
+        FILE_NAME_WIDGET,
+        ARTIST_NAME_WIDGET,
+        FOLDER_NAME_WIDGET,
+        PLAYLIST_NAME_WIDGET,
         WIDGET_MAX,
     };
     Q_ENUM(ControlType)
 
     static_assert(RESERVED_0X1F == 0x1F, "missaligned");
-    static_assert(RESERVED_0X2B == 0x2B, "missaligned");
+    static_assert(AUDIO_SETTINGS_BUTTON == 0x2B, "missaligned");
+    static_assert(PLAYLISTS_BUTTON == 0x3C, "missaligned");
     static_assert(RESERVED_0X3F == 0x3F, "missaligned");
 
     // Basic functionality:

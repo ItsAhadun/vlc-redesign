@@ -19,6 +19,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import VLC.MainInterface
+import VLC.Style
 
 Repeater {
     id: repeater
@@ -27,6 +28,9 @@ Repeater {
 
     property real availableWidth: Number.MAX_VALUE
     property real availableHeight: Number.MAX_VALUE
+
+    // redesign: give icon buttons the "Icon Wrapper" hit area (30x32 around a 24 icon)
+    property bool iconWrapper: false
 
     signal requestLockUnlockAutoHide(bool lock)
     signal menuOpened(var menu)
@@ -102,6 +106,11 @@ Repeater {
 
             if (typeof item.activeFocusOnTab === "boolean")
                 item.activeFocusOnTab = true
+
+            if (repeater.iconWrapper && (item.description !== undefined) && (item.horizontalPadding !== undefined)) {
+                item.horizontalPadding = Qt.binding(() => (VLCStyle.iconWrapper_width - VLCStyle.icon_normal) / 2)
+                item.verticalPadding = Qt.binding(() => (VLCStyle.iconWrapper_height - VLCStyle.icon_normal) / 2)
+            }
 
             item.visible = Qt.binding(function() { return loader.visible })
 
