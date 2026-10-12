@@ -46,6 +46,9 @@ public:
     PrefsDialog( QWindow *, qt_intf_t * );
     virtual ~PrefsDialog();
 
+    /* switch to the simple view and show one of its panels (SPrefs*) */
+    void showSimplePanel( int panel );
+
 private:
     size_t count;
     module_t **p_list;

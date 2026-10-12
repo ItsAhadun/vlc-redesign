@@ -102,6 +102,13 @@ public:
     void cleanLang();
 #endif
 
+    /* interface language helpers, shared with the QML settings window */
+    struct Language { QString iso; QString name; };
+    static QVector<Language> languages();
+    static bool languageIsEditable();       /* only on Windows (registry) */
+    static QString currentLanguage();       /* iso code, "auto" if unset */
+    static void setCurrentLanguage( const QString& iso );
+
 private:
     template<typename ControlType, typename WidgetType>
     void configGeneric(const char* option, QLabel* label, WidgetType* control);

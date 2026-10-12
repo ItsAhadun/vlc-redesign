@@ -72,8 +72,9 @@
 #define I_OP_DIR_WINTITLE I_DIR_OR_FOLDER( N_("Open Directory"), \
                                            N_("Open Folder") )
 
+/* prefsDialog is handled separately: it is either the QML settings window
+ * or the classic preferences dialog (see DialogsProvider::prefsDialog) */
 #define BASE_DIALOG(X) \
-    X(prefsDialog) \
     X(openDialog) \
     X(firstRunDialog) \
     X(extendedDialog) \
@@ -271,6 +272,11 @@ bool DialogsProvider::eventFilter(QObject *watched, QEvent *event) {
     case QEvent::Close:
     case QEvent::Destroy:
     {
+        if (watched == m_prefsDialog.get()) {
+            emit prefsDialogVisibleChanged();
+            emit classicPrefsDialogVisibleChanged();
+            break;
+        }
         ALL_DIALOG(CASE_DIALOG)
         break;
     }
@@ -289,17 +295,54 @@ const QEvent::Type DialogEvent::DialogEvent_Type =
 
 void DialogsProvider::prefsDialog()
 {
+    /* The QML settings window lives in the main QML interface; without it
+     * (dialogs provider mode) fall back to the classic preferences. */
+    if (p_intf->p_mi)
+        setSettingsWindowVisible(!m_settingsWindowVisible);
+    else
+        classicPrefsDialog();
+}
+
+void DialogsProvider::setSettingsWindowVisible(bool visible)
+{
+    if (m_settingsWindowVisible == visible)
+        return;
+    m_settingsWindowVisible = visible;
+    emit settingsWindowVisibleChanged();
+    emit prefsDialogVisibleChanged();
+}
+
+void DialogsProvider::classicPrefsDialog(int simplePanel)
+{
     if (Q_LIKELY(!m_prefsDialog))
     {
         m_prefsDialog = new PrefsDialog( nullptr, p_intf );
         m_prefsDialog->setAttribute(Qt::WA_DeleteOnClose);
         m_prefsDialog->installEventFilter(this);
+        if (simplePanel >= 0)
+            m_prefsDialog->showSimplePanel(simplePanel);
         m_prefsDialog->open();
+    }
+    else if (simplePanel >= 0)
+    {
+        m_prefsDialog->showSimplePanel(simplePanel);
+        m_prefsDialog->raise();
+        m_prefsDialog->activateWindow();
     }
     else
     {
         m_prefsDialog->reject();
     }
+}
+
+bool DialogsProvider::prefsDialogVisible() const
+{
+    return m_settingsWindowVisible || classicPrefsDialogVisible();
+}
+
+bool DialogsProvider::classicPrefsDialogVisible() const
+{
+    return m_prefsDialog && m_prefsDialog->isVisible();
 }
 
 void DialogsProvider::firstRunDialog()
