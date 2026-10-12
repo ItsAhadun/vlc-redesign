@@ -56,6 +56,13 @@ FocusScope {
         return !s.developer || developerMode
     }
 
+    // move the keyboard focus to the first control of the page
+    function focusFirst() {
+        const item = content.nextItemInFocusChain(true)
+        if (item)
+            item.forceActiveFocus(Qt.TabFocusReason)
+    }
+
     function toggleAdvanced() {
         if (!hasAdvanced) {
             SettingsBackend.openClassicPreferences()

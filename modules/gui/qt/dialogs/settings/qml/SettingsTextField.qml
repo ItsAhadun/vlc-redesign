@@ -84,7 +84,7 @@ T.TextField {
     verticalAlignment: TextInput.AlignVCenter
 
     font.pixelSize: VLCStyle.fontSize_body
-    color: enabled ? pal.fgA2 : pal.fgA4
+    color: pal.fgA2
     placeholderTextColor: pal.fgA4
     selectionColor: pal.bgAccentBright
     selectedTextColor: pal.fg1

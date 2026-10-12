@@ -507,17 +507,21 @@ QtObject {
                 ] },
                 { title: qsTr("Loading Subtitles"), rows: [
                     { label: qsTr("Load subtitle files automatically"), info: true, key: "sub-autodetect-file" },
-                    { label: qsTr("File name matching"), info: true, type: "dropdown", key: "sub-autodetect-fuzzy" }
+                    { label: qsTr("File name matching"), info: true, type: "dropdown", key: "sub-autodetect-fuzzy",
+                      choices: [ { value: 0, text: qsTr("Off") }, { value: 1, text: qsTr("Any subtitle file") },
+                                 { value: 2, text: qsTr("Title anywhere in the name") },
+                                 { value: 3, text: qsTr("Title with extra characters") },
+                                 { value: 4, text: qsTr("Exact title") } ] }
                 ] },
                 { title: qsTr("Appearance"), rows: [
                     { label: qsTr("Font"), info: true, type: "text", key: "freetype-font", placeholder: qsTr("System, sans-serif") },
-                    { label: qsTr("Size values"), info: true, type: "segmented", key: "freetype-fontsize",
-                      help: qsTr("Relative sizes follow the video size. Fixed sizes are in pixels."),
-                      choices: [ { value: 0, text: qsTr("Relative") }, { value: 1, text: qsTr("Fixed") } ],
-                      get: () => Number(SettingsBackend.value("freetype-fontsize")) > 0 ? 1 : 0,
-                      set: (v) => SettingsBackend.setValue("freetype-fontsize", v === 1 ? 24 : 0) },
-                    { label: qsTr("Font size"), type: "dropdown", key: "freetype-rel-fontsize",
-                      enabledWhen: () => Number(SettingsBackend.value("freetype-fontsize")) === 0 },
+                    // VLC 4 sizes subtitles with sub-text-scale (percent of the default size)
+                    { label: qsTr("Size values"), info: true, type: "segmented", key: "sub-text-scale",
+                      choices: [ { value: 75, text: qsTr("Small") }, { value: 100, text: qsTr("Normal") },
+                                 { value: 150, text: qsTr("Large") } ] },
+                    { label: qsTr("Font size"), type: "dropdown", key: "sub-text-scale",
+                      choices: () => root.withCurrent([50, 75, 100, 125, 150, 200, 300].map(
+                          (v) => ({ value: v, text: v === 100 ? qsTr("Automatic") : v + "%" })), "sub-text-scale") },
                     { label: qsTr("Bold"), key: "freetype-bold" },
                     { label: qsTr("Text color"), type: "color", key: "freetype-color" },
                     { label: qsTr("Text opacity"), type: "slider", key: "freetype-opacity", from: 0, to: 100, step: 1,

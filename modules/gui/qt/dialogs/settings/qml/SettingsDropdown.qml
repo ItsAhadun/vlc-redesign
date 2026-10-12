@@ -89,7 +89,7 @@ T.ComboBox {
     contentItem: Text {
         text: control.currentIndex >= 0 ? control.displayText : "-"
         font: control.font
-        color: control.enabled ? control.pal.fgA2 : control.pal.fgA4
+        color: control.pal.fgA2
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
@@ -99,7 +99,7 @@ T.ComboBox {
         y: (control.height - height) / 2
         text: VLCIcons.chevron_down
         font.pixelSize: VLCStyle.icon_normal
-        color: control.enabled ? control.pal.fgA2 : control.pal.fgA4
+        color: control.pal.fgA2
         rotation: control.popup.visible ? 180 : 0
     }
 

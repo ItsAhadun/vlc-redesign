@@ -45,7 +45,7 @@ T.Button {
     contentItem: Text {
         text: control.text
         font: control.font
-        color: !control.enabled ? control.pal.fgA4
+        color: !control.enabled ? control.pal.fgA3
              : control.primary ? control.pal.fgOnAccent
              : (control.hovered ? (control.pal.isDark ? control.pal.fg2 : control.pal.fgB1) : control.pal.fgA2)
         horizontalAlignment: Text.AlignHCenter

@@ -84,7 +84,13 @@ FocusScope {
             return row.choices()
         if (row.choices)
             return row.choices
-        return row.key && optionExists ? SettingsBackend.choices(row.key) : []
+        if (!row.key || !optionExists)
+            return []
+        const list = SettingsBackend.choices(row.key)
+        // module options: "" means automatic selection
+        if (typeof value === "string" && !list.some((c) => c.value === value))
+            list.unshift({ value: value, text: value === "" ? qsTr("Automatic") : value })
+        return list
     }
 
     implicitWidth: VLCStyle.dp(784, VLCStyle.scale)
@@ -104,14 +110,17 @@ FocusScope {
                         controlLoader.x - VLCStyle.space_20 - (infoIcon.visible ? infoIcon.width + VLCStyle.space_10 : 0))
         text: root.row.label
         font.pixelSize: VLCStyle.fontSize_body
-        color: root.rowEnabled ? root.pal.fgA2 : root.pal.fgA4
+        color: root.pal.fgA2
+        // dim disabled rows with opacity: FG/A4 is not dim in the light theme
+        opacity: root.rowEnabled ? 1 : 0.45
         elide: Text.ElideRight
     }
 
     Widgets.IconLabel {
         id: infoIcon
 
-        visible: (root.row.info ?? false) || root.helpText !== "" && !root.optionExists
+        // disabled rows always explain why
+        visible: (root.row.info ?? false) || (!root.rowEnabled && root.helpText !== "")
         anchors.left: label.right
         anchors.leftMargin: VLCStyle.space_10
         anchors.verticalCenter: label.verticalCenter
@@ -143,6 +152,7 @@ FocusScope {
         anchors.left: root.type === "addons" ? parent.left : undefined
         anchors.verticalCenter: parent.verticalCenter
         enabled: root.rowEnabled
+        opacity: root.rowEnabled ? 1 : 0.45
         focus: true
 
         sourceComponent: {

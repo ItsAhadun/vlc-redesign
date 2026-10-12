@@ -269,7 +269,7 @@ Window {
                                         }
                                         Keys.onUpPressed: sidebar.move(-1)
                                         Keys.onDownPressed: sidebar.move(1)
-                                        Keys.onRightPressed: pageView.forceActiveFocus(Qt.TabFocusReason)
+                                        Keys.onRightPressed: pageView.focusFirst()
                                     }
                                 }
                             }
