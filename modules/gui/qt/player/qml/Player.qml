@@ -19,7 +19,6 @@ import QtQuick
 import QtQuick.Layouts
 import QtQml.Models
 import QtQuick.Window
-import QtQuick.Shapes
 import QtQuick.Templates as T
 
 import VLC.MainInterface
@@ -315,8 +314,10 @@ FocusScope {
         }
 
         // masks the corners of the video with the frame color
-        component CornerMask : Shape {
-            id: corner
+        // (a Canvas, not QtQuick.Shapes: not available in the Windows static
+        // Qt, see design/tools/qml-imports-allowlist.txt)
+        component CornerMask : Canvas {
+            id: cornerMask
 
             property real radius: VLCStyle.radius_large
             property color color: windowTheme.bg.primary
@@ -329,13 +330,24 @@ FocusScope {
             rotation: corner * 90
             enabled: false
 
-            ShapePath {
-                strokeWidth: -1
-                fillColor: corner.color
-                startX: 0; startY: 0
-                PathLine { x: corner.radius; y: 0 }
-                PathArc { x: 0; y: corner.radius; radiusX: corner.radius; radiusY: corner.radius; direction: PathArc.Counterclockwise }
-                PathLine { x: 0; y: 0 }
+            onColorChanged: requestPaint()
+            onRadiusChanged: requestPaint()
+
+            onPaint: {
+                const ctx = getContext("2d")
+                ctx.reset()
+                const r = cornerMask.radius
+                if (r <= 0)
+                    return
+                // the area between the corner of the square and the quarter
+                // circle centered on (r, r)
+                ctx.fillStyle = cornerMask.color
+                ctx.beginPath()
+                ctx.moveTo(0, 0)
+                ctx.lineTo(r, 0)
+                ctx.arc(r, r, r, -Math.PI / 2, Math.PI, true)
+                ctx.closePath()
+                ctx.fill()
             }
         }
 

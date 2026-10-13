@@ -18,7 +18,6 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Templates as T
-import QtQuick.Shapes
 
 import VLC.MainInterface
 import VLC.Widgets as Widgets
@@ -144,50 +143,70 @@ T.Pane {
                 readonly property real fillWidth: Math.max(0, Math.min(1, volControl.visualPosition)) * width
                 readonly property real midY: height / 2
 
-                // keep the edges smooth
-                layer.enabled: true
-                layer.samples: 4
-                layer.smooth: true
+                // the wedge and its gradient fill (a Canvas, not QtQuick.Shapes:
+                // not available in the Windows static Qt, see
+                // design/tools/qml-imports-allowlist.txt)
+                Canvas {
+                    id: wedgeCanvas
 
-                Shape {
                     anchors.fill: parent
 
-                    ShapePath {
-                        strokeWidth: -1
-                        fillColor: volControl.colorContext.palette.isDark ? volControl.colorContext.palette.bgB2
-                                                                          : volControl.colorContext.palette.bgA5
+                    readonly property var palette: volControl.colorContext.palette
+                    readonly property color trackColor: palette.isDark ? palette.bgB2 : palette.bgA5
+                    readonly property color lowColor: Qt.darker(palette.volumeGaugeLow, 1.25)
+                    readonly property color midColor: Qt.darker(palette.volumeGaugeMid, 1.25)
+                    readonly property color highColor: Qt.darker(palette.volumeGaugeHigh, 1.25)
+                    readonly property color peakColor: Qt.darker(palette.volumeGaugePeak, 1.25)
+                    readonly property real fillWidth: wedge.fillWidth
 
-                        startX: 0; startY: wedge.midY - volControl.wedgeStartHeight / 2
-                        PathLine { x: wedge.width; y: 0 }
-                        PathLine { x: wedge.width; y: wedge.height }
-                        PathLine { x: 0; y: wedge.midY + volControl.wedgeStartHeight / 2 }
-                        PathLine { x: 0; y: wedge.midY - volControl.wedgeStartHeight / 2 }
-                    }
+                    onTrackColorChanged: requestPaint()
+                    onLowColorChanged: requestPaint()
+                    onMidColorChanged: requestPaint()
+                    onHighColorChanged: requestPaint()
+                    onPeakColorChanged: requestPaint()
+                    onFillWidthChanged: requestPaint()
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
 
-                    ShapePath {
-                        id: fillPath
+                    onPaint: {
+                        const ctx = getContext("2d")
+                        ctx.reset()
+                        const w = width, h = height
+                        if (w <= 0 || h <= 0)
+                            return
+                        const midY = h / 2
+                        const start = volControl.wedgeStartHeight / 2
 
-                        strokeWidth: -1
+                        // track
+                        ctx.fillStyle = trackColor
+                        ctx.beginPath()
+                        ctx.moveTo(0, midY - start)
+                        ctx.lineTo(w, 0)
+                        ctx.lineTo(w, h)
+                        ctx.lineTo(0, midY + start)
+                        ctx.closePath()
+                        ctx.fill()
 
-                        fillGradient: LinearGradient {
-                            x1: 0; y1: 0
-                            x2: wedge.width; y2: 0
-                            GradientStop { position: 0.00; color: Qt.darker(volControl.colorContext.palette.volumeGaugeLow, 1.25) }
-                            GradientStop { position: 0.58; color: Qt.darker(volControl.colorContext.palette.volumeGaugeMid, 1.25) }
-                            GradientStop { position: 0.79; color: Qt.darker(volControl.colorContext.palette.volumeGaugeHigh, 1.25) }
-                            GradientStop { position: 1.00; color: Qt.darker(volControl.colorContext.palette.volumeGaugePeak, 1.25) }
-                        }
-
-                        readonly property real inset: VLCStyle.dp(2, VLCStyle.scale)
-                        readonly property real right: Math.max(inset, wedge.fillWidth)
-                        readonly property real h0: Math.max(0, volControl.wedgeHalfHeightAt(inset) - inset)
-                        readonly property real h1: Math.max(0, volControl.wedgeHalfHeightAt(right) - inset)
-
-                        startX: fillPath.inset; startY: wedge.midY - fillPath.h0
-                        PathLine { x: fillPath.right; y: wedge.midY - fillPath.h1 }
-                        PathLine { x: fillPath.right; y: wedge.midY + fillPath.h1 }
-                        PathLine { x: fillPath.inset; y: wedge.midY + fillPath.h0 }
-                        PathLine { x: fillPath.inset; y: wedge.midY - fillPath.h0 }
+                        // level
+                        const inset = VLCStyle.dp(2, VLCStyle.scale)
+                        const right = Math.max(inset, fillWidth)
+                        const h0 = Math.max(0, volControl.wedgeHalfHeightAt(inset) - inset)
+                        const h1 = Math.max(0, volControl.wedgeHalfHeightAt(right) - inset)
+                        if (right <= inset || (h0 <= 0 && h1 <= 0))
+                            return
+                        const gradient = ctx.createLinearGradient(0, 0, w, 0)
+                        gradient.addColorStop(0.00, lowColor)
+                        gradient.addColorStop(0.58, midColor)
+                        gradient.addColorStop(0.79, highColor)
+                        gradient.addColorStop(1.00, peakColor)
+                        ctx.fillStyle = gradient
+                        ctx.beginPath()
+                        ctx.moveTo(inset, midY - h0)
+                        ctx.lineTo(right, midY - h1)
+                        ctx.lineTo(right, midY + h1)
+                        ctx.lineTo(inset, midY + h0)
+                        ctx.closePath()
+                        ctx.fill()
                     }
                 }
 
