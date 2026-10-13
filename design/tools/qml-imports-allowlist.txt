@@ -1,0 +1,21 @@
+# QML modules the Qt interface may import (besides VLC.*), checked by
+# qt-packaging-check.sh (run by qml-check.sh).
+#
+# This is the set of modules upstream VLC imports (modules/gui/qt at a5538c5):
+# the Windows installer links the static contrib Qt, which only provides the
+# QML modules upstream needs (see the Q_INIT_RESOURCE(qmake_Qt*) list in
+# modules/gui/qt/qt.cpp and check_qml_module.py in configure.ac). A module
+# missing there is NOT an error at build time: on Windows the importing QML
+# file fails to load at runtime ('module "QtQuick.Shapes" is not installed')
+# and the main window stays blank. Do not add a module here unless the
+# contribs and qt.cpp are updated to provide it on every platform.
+QtQml
+QtQml.Models
+QtQuick
+QtQuick.Controls.Basic
+QtQuick.Controls.impl
+QtQuick.Layouts
+QtQuick.Templates
+QtQuick.Window
+# only used by the QML unit tests (modules/gui/qt/tests), not shipped
+QtTest

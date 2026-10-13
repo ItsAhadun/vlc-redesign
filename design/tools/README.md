@@ -12,7 +12,11 @@ changes can be checked without waiting for the 1h+ Windows installer CI:
 Everything runs headless (Xvfb). The build is a native Linux build of VLC
 master with the same Qt version as the Windows contribs (6.8.3), so the UI
 is the same as on Windows, except for platform bits (no Windows CSD/acrylic
-blur effect, the X11 window is undecorated).
+blur effect, the X11 window is undecorated) and **packaging**: the harness
+uses meson and the full Linux Qt, the Windows installer uses autotools and the
+static contrib Qt, which only links the QML modules upstream VLC uses. See
+`qt-packaging-check.sh` below: a passing screenshot here does not prove the
+QML loads on Windows unless that check passes too.
 
 ## Setup (once per machine / container)
 
@@ -98,6 +102,26 @@ plus `hint:` lines (e.g. `Did you mean "Rectangle"?`).
   as `NOT-IN-MESON` (it would not be packaged in the plugin).
 * qmllint can't catch everything (e.g. duplicate property bindings, errors in
   JS on C++ objects): `screenshot.sh` prints the QML runtime warnings too.
+* It first runs `qt-packaging-check.sh` (fails qml-check with exit 1, lines
+  prefixed `PACKAGING`), which can also be run alone (no build needed, <1 s).
+
+## qt-packaging-check.sh - Windows packaging guard
+
+Checks what only breaks in the Windows (autotools + static Qt) build:
+
+* **QML imports**: every `import X` in `modules/gui/qt` must be `VLC.*` or
+  listed in `qml-imports-allowlist.txt` (= the modules upstream imports). The
+  static contrib Qt does not have the others: on Windows, a file importing e.g.
+  `QtQuick.Shapes` fails at runtime with `module "QtQuick.Shapes" is not
+  installed`, every file using it is "unavailable", and the main window stays
+  blank, while everything works on Linux. This happened with
+  `DashedOutline.qml` (now a `Canvas`). Use `Canvas`/`Rectangle`/`Image`
+  instead of Shapes, `layer.effect` with a `ShaderEffect` instead of
+  `QtQuick.Effects`/`Qt5Compat.GraphicalEffects`. Don't extend the allowlist
+  without adding the module to the contribs and to qt.cpp.
+* **QML module lists**: the per-module QML/singleton lists of
+  `modules/gui/qt/meson.build` and `Makefile.am` must be identical.
+* **Resources**: files of `assets.qrc` exist and are in `libqt_plugin_la_RES`.
 
 ## build-qt.sh - incremental build
 
@@ -181,6 +205,7 @@ After Video: All `60 127`, Playlists `60 162` (Music/Browse/Discover move to
 * `setup.sh` - environment bootstrap (see above)
 * `seed-profile.sh` - (re)create `/opt/vlc-profile`
 * `qml-check.sh` + `qmllint-baseline.txt` - static QML check
+* `qt-packaging-check.sh` + `qml-imports-allowlist.txt` - Windows packaging guard
 * `build-qt.sh` - incremental build
 * `screenshot.sh` - headless screenshots
 * `_common.sh` - shared env (paths, Qt/pkg-config env)

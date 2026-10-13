@@ -36,6 +36,10 @@
 # does not exist); use screenshot.sh, which prints QML runtime warnings.
 # A newly added QML file must also be listed in modules/gui/qt/meson.build;
 # files not listed there are linted but reported as NOT-IN-MESON warnings.
+# Before linting, qt-packaging-check.sh is run (exit code 1 if it fails):
+# QML imports outside qml-imports-allowlist.txt (modules missing from the
+# Windows static Qt, e.g. QtQuick.Shapes), meson.build vs Makefile.am QML
+# lists and assets.qrc/libqt_plugin_la_RES consistency.
 set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
@@ -69,6 +73,9 @@ if [ ! -d "$VLC_BUILD/modules/gui/qt/VLC" ] && [ -d /home/user/vlc-build/modules
 fi
 [ -d "$VLC_BUILD/modules/gui/qt/VLC" ] || die "no generated QML module dirs in $VLC_BUILD (run setup.sh)"
 
+packaging_status=0
+"$(dirname "${BASH_SOURCE[0]}")/qt-packaging-check.sh" || packaging_status=1
+
 QMLLINT="$VLC_QT_DIR/bin/qmllint"
 [ -x "$QMLLINT" ] || die "qmllint not found at $QMLLINT"
 
@@ -81,7 +88,7 @@ if [ $changed = 1 ]; then
     ( cd "$VLC_SRC" && { git diff --name-only HEAD -- 'modules/gui/qt/*.qml'; \
                          git ls-files --others --exclude-standard -- 'modules/gui/qt/*.qml'; } ) \
         | sed "s|^|$VLC_SRC/|" > "$filelist.req"
-    [ -s "$filelist.req" ] || { echo "qml-check: no changed QML files"; exit 0; }
+    [ -s "$filelist.req" ] || { echo "qml-check: no changed QML files"; exit $packaging_status; }
 else
     : > "$filelist.req"
     for a in "${args[@]+"${args[@]}"}"; do
@@ -133,7 +140,7 @@ json.dump({os.path.realpath(t): s for s, t in mapping.items()}, open(outf + ".ma
 EOF
 
 n="$(wc -l < "$filelist")"
-[ "$n" -gt 0 ] || { echo "qml-check: nothing to lint"; exit 0; }
+[ "$n" -gt 0 ] || { echo "qml-check: nothing to lint"; exit $packaging_status; }
 
 
 # --- run qmllint --------------------------------------------------------------
@@ -158,8 +165,9 @@ done
 cut -f1 "$filelist" | (cd "$tree" && xargs -d '\n' -P "$jobs" -n 16 \
     sh -c '"$0" "$@" 2>/dev/null; true' "$QMLLINT" "${filtered[@]}") > "$filelist.json"
 
+lint_status=0
 python3 -I - "$filelist.json" "$filelist.map" "$VLC_SRC" "$all_warnings" "$show_known" \
-    "$update_baseline" "$BASELINE" "${json_out:-}" <<'EOF'
+    "$update_baseline" "$BASELINE" "${json_out:-}" <<'EOF' || lint_status=$?
 import collections, json, os, re, sys
 raw, mapf, src, all_warn, show_known, update, basef, json_out = sys.argv[1:9]
 all_warn, show_known, update = all_warn == "1", show_known == "1", update == "1"
@@ -272,3 +280,9 @@ print(f"qml-check: {len(reports)} file(s): {errors} error(s), {warnings} new war
       f"{known} known upstream issue(s) hidden", file=sys.stderr)
 sys.exit(1 if errors else 0)
 EOF
+
+if [ $packaging_status != 0 ]; then
+    echo "qml-check: qt-packaging-check.sh failed (see PACKAGING lines above)" >&2
+    exit 1
+fi
+exit $lint_status
